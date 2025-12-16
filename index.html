@@ -7,7 +7,7 @@
     <style>
         body{font-family:system-ui;margin:16px}
         .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
-        input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
+        input,button,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
         label{display:block;font-weight:600;margin-top:10px}
         table{width:100%;border-collapse:collapse;margin-top:10px}
         th,td{border-bottom:1px solid #eee;padding:8px 4px;text-align:left}
@@ -24,14 +24,17 @@
     <h2>Navn</h2>
     <input id="name" placeholder="Skriv navnet ditt" autocomplete="name" />
     <button id="start">Start</button>
-    <p class="muted">Lagrer fortløpende. Ølnavn er skjult til testen er ferdig.</p>
+    <p class="muted">Lagrer fortløpende i basen.</p>
 </div>
 
 <div id="screenRate" class="card" style="display:none">
     <div class="muted">Du: <b id="who"></b></div>
 
-    <label>Ølnummer</label>
-    <input id="beerNo" inputmode="numeric" pattern="[0-9]*" placeholder="1" />
+    <label>Velg øl</label>
+    <select id="beerSelect">
+        <option value="">Laster øl…</option>
+    </select>
+    <div class="muted" id="beerHelp"></div>
 
     <label>Smak (0–50)</label>
     <input id="smak" type="number" min="0" max="50" step="1" inputmode="numeric" />
@@ -49,7 +52,7 @@
 
     <div class="row" style="margin-top:12px">
         <button id="save">Lagre</button>
-        <button id="reset" type="button">Nullstill lokalt navn</button>
+        <button id="reset" type="button">Bytt navn</button>
     </div>
 
     <div class="muted" id="status" style="margin-top:8px">—</div>
@@ -60,23 +63,21 @@
             <thead>
             <tr>
                 <th>Øl</th>
+                <th>Navn</th>
                 <th class="right">Total</th>
             </tr>
             </thead>
             <tbody id="rows"></tbody>
         </table>
-        <div class="muted">Tips: å gi samme øl på nytt oppdaterer scoren.</div>
+        <div class="muted">Tips: Velger du samme øl igjen og lagrer, oppdateres scoren.</div>
     </div>
 </div>
 
 <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-    // ✅ Sett inn anon key under
     const SUPABASE_URL = "https://lgwgsbdqsrfjmbcqomns.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnd2dzYmRxc3Jmam1iY3FvbW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MDMyMTEsImV4cCI6MjA4MTQ3OTIxMX0.nIGnmGVcgN_A4Vw-uDxszOzgoCAhAcS2WLR0VFERKts";
-
-    // ✅ Sett denne etter du har opprettet tasting i admin.html
     const TASTING_ID = "7df0dc00-db94-421f-9a1d-3a0e3d5bad69";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -85,16 +86,23 @@
     const screenRate = document.querySelector("#screenRate");
     const nameInput = document.querySelector("#name");
     const who = document.querySelector("#who");
-    const beerNoEl = document.querySelector("#beerNo");
+
+    const beerSelect = document.querySelector("#beerSelect");
+    const beerHelp = document.querySelector("#beerHelp");
+
     const smakEl = document.querySelector("#smak");
     const ettersmakEl = document.querySelector("#ettersmak");
     const fargeEl = document.querySelector("#farge");
     const luktEl = document.querySelector("#lukt");
     const totalPreview = document.querySelector("#totalPreview");
+
     const rows = document.querySelector("#rows");
     const status = document.querySelector("#status");
 
     const LS_NAME = "juleol_name_v1";
+
+    let beers = [];            // [{beer_no, name}]
+    let beerNameByNo = new Map();
 
     function clampInt(v, min, max) {
         const n = Number(v);
@@ -126,10 +134,42 @@
         return data.session;
     }
 
+    async function loadBeers() {
+        beerSelect.innerHTML = `<option value="">Laster…</option>`;
+        beerHelp.textContent = "";
+
+        const { data, error } = await supabase
+            .from("beers")
+            .select("beer_no, name")
+            .eq("tasting_id", TASTING_ID)
+            .order("beer_no", { ascending: true });
+
+        if (error) throw error;
+
+        beers = data ?? [];
+        beerNameByNo = new Map(beers.map(b => [b.beer_no, b.name]));
+
+        if (beers.length === 0) {
+            beerSelect.innerHTML = `<option value="">Ingen øl lagt inn ennå</option>`;
+            beerHelp.textContent = "Admin må legge inn øl i admin.html først.";
+            return;
+        }
+
+        beerSelect.innerHTML =
+            `<option value="">Velg øl…</option>` +
+            beers.map(b => `<option value="${b.beer_no}">${b.beer_no} – ${escapeHtml(b.name)}</option>`).join("");
+
+        beerHelp.textContent = `${beers.length} øl tilgjengelig.`;
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[m]));
+    }
+
     async function loadMyRatings() {
         const { data, error } = await supabase
             .from("ratings")
-            .select("beer_no, score, updated_at, created_at")
+            .select("beer_no, score")
             .eq("tasting_id", TASTING_ID)
             .order("beer_no", { ascending: true });
 
@@ -137,8 +177,9 @@
 
         rows.innerHTML = "";
         for (const r of data) {
+            const name = beerNameByNo.get(r.beer_no) ?? "";
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${r.beer_no}</td><td class="right">${r.score}</td>`;
+            tr.innerHTML = `<td>${r.beer_no}</td><td>${escapeHtml(name)}</td><td class="right">${r.score}</td>`;
             rows.appendChild(tr);
         }
     }
@@ -150,14 +191,15 @@
         }
 
         await ensureSession();
+        await loadBeers();
 
         const savedName = localStorage.getItem(LS_NAME) || "";
         if (savedName) {
             who.textContent = savedName;
             screenName.style.display = "none";
             screenRate.style.display = "block";
-            await loadMyRatings();
             calcTotal100();
+            await loadMyRatings();
         } else {
             nameInput.value = "";
         }
@@ -171,7 +213,7 @@
         screenName.style.display = "none";
         screenRate.style.display = "block";
         await loadMyRatings();
-        beerNoEl.focus();
+        beerSelect.focus();
     });
 
     document.querySelector("#reset").addEventListener("click", () => {
@@ -183,8 +225,8 @@
         const n = localStorage.getItem(LS_NAME);
         if (!n) return alert("Mangler navn");
 
-        const beerNo = clampInt(beerNoEl.value, 1, 9999);
-        if (beerNo === null) return alert("Ugyldig ølnummer");
+        const beerNo = clampInt(beerSelect.value, 1, 9999);
+        if (beerNo === null) return alert("Velg et øl fra lista");
 
         const smak = clampInt(smakEl.value, 0, 50);
         const ettersmak = clampInt(ettersmakEl.value, 0, 20);
@@ -219,9 +261,6 @@
 
         status.textContent = "Lagret: " + new Date().toLocaleTimeString();
         await loadMyRatings();
-
-        // klargjør neste øl
-        beerNoEl.focus();
     });
 
     boot().catch(e => {
