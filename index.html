@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="no">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Juleøl-test</title>
+    <style>
+        body{font-family:system-ui;margin:16px}
+        .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
+        input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
+        label{display:block;font-weight:600;margin-top:10px}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        th,td{border-bottom:1px solid #eee;padding:8px 4px;text-align:left}
+        .right{text-align:right}
+        .muted{color:#666;font-size:13px}
+        .row{display:flex;gap:10px}
+        .row>*{flex:1}
+    </style>
+</head>
+<body>
+<h1>Juleøl-test 🍻</h1>
+
+<div id="screenName" class="card">
+    <h2>Navn</h2>
+    <input id="name" placeholder="Skriv navnet ditt" autocomplete="name" />
+    <button id="start">Start</button>
+    <p class="muted">Lagrer fortløpende. Ølnavn er skjult til testen er ferdig.</p>
+</div>
+
+<div id="screenRate" class="card" style="display:none">
+    <div class="muted">Du: <b id="who"></b></div>
+
+    <label>Ølnummer</label>
+    <input id="beerNo" inputmode="numeric" pattern="[0-9]*" placeholder="1" />
+
+    <label>Smak (0–50)</label>
+    <input id="smak" type="number" min="0" max="50" step="1" inputmode="numeric" />
+
+    <label>Ettersmak (0–20)</label>
+    <input id="ettersmak" type="number" min="0" max="20" step="1" inputmode="numeric" />
+
+    <label>Farge (0–20)</label>
+    <input id="farge" type="number" min="0" max="20" step="1" inputmode="numeric" />
+
+    <label>Lukt (0–10)</label>
+    <input id="lukt" type="number" min="0" max="10" step="1" inputmode="numeric" />
+
+    <div class="muted" id="totalPreview" style="margin-top:10px">Total: 0 / 100</div>
+
+    <div class="row" style="margin-top:12px">
+        <button id="save">Lagre</button>
+        <button id="reset" type="button">Nullstill lokalt navn</button>
+    </div>
+
+    <div class="muted" id="status" style="margin-top:8px">—</div>
+
+    <div class="card">
+        <h3>Dine registreringer</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Øl</th>
+                <th class="right">Total</th>
+            </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+        <div class="muted">Tips: å gi samme øl på nytt oppdaterer scoren.</div>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // ✅ Sett inn anon key under
+    const SUPABASE_URL = "https://lgwgsbdqsrfjmbcqomns.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnd2dzYmRxc3Jmam1iY3FvbW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MDMyMTEsImV4cCI6MjA4MTQ3OTIxMX0.nIGnmGVcgN_A4Vw-uDxszOzgoCAhAcS2WLR0VFERKts";
+
+    // ✅ Sett denne etter du har opprettet tasting i admin.html
+    const TASTING_ID = "PASTE_TASTING_UUID_HERE";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const screenName = document.querySelector("#screenName");
+    const screenRate = document.querySelector("#screenRate");
+    const nameInput = document.querySelector("#name");
+    const who = document.querySelector("#who");
+    const beerNoEl = document.querySelector("#beerNo");
+    const smakEl = document.querySelector("#smak");
+    const ettersmakEl = document.querySelector("#ettersmak");
+    const fargeEl = document.querySelector("#farge");
+    const luktEl = document.querySelector("#lukt");
+    const totalPreview = document.querySelector("#totalPreview");
+    const rows = document.querySelector("#rows");
+    const status = document.querySelector("#status");
+
+    const LS_NAME = "juleol_name_v1";
+
+    function clampInt(v, min, max) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return null;
+        const i = Math.trunc(n);
+        if (i < min || i > max) return null;
+        return i;
+    }
+
+    function calcTotal100() {
+        const smak = clampInt(smakEl.value, 0, 50) ?? 0;
+        const ettersmak = clampInt(ettersmakEl.value, 0, 20) ?? 0;
+        const farge = clampInt(fargeEl.value, 0, 20) ?? 0;
+        const lukt = clampInt(luktEl.value, 0, 10) ?? 0;
+        const total = smak + ettersmak + farge + lukt;
+        totalPreview.textContent = `Total: ${total} / 100`;
+        return total;
+    }
+
+    [smakEl, ettersmakEl, fargeEl, luktEl].forEach(el =>
+        el.addEventListener("input", calcTotal100)
+    );
+
+    async function ensureSession() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) return session;
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
+        return data.session;
+    }
+
+    async function loadMyRatings() {
+        const { data, error } = await supabase
+            .from("ratings")
+            .select("beer_no, score, updated_at, created_at")
+            .eq("tasting_id", TASTING_ID)
+            .order("beer_no", { ascending: true });
+
+        if (error) throw error;
+
+        rows.innerHTML = "";
+        for (const r of data) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${r.beer_no}</td><td class="right">${r.score}</td>`;
+            rows.appendChild(tr);
+        }
+    }
+
+    async function boot() {
+        if (!TASTING_ID || TASTING_ID.includes("PASTE_")) {
+            alert("Du må sette TASTING_ID i index.html (UUID fra admin-siden).");
+            return;
+        }
+
+        await ensureSession();
+
+        const savedName = localStorage.getItem(LS_NAME) || "";
+        if (savedName) {
+            who.textContent = savedName;
+            screenName.style.display = "none";
+            screenRate.style.display = "block";
+            await loadMyRatings();
+            calcTotal100();
+        } else {
+            nameInput.value = "";
+        }
+    }
+
+    document.querySelector("#start").addEventListener("click", async () => {
+        const n = nameInput.value.trim();
+        if (!n) return alert("Skriv inn navn først 🙂");
+        localStorage.setItem(LS_NAME, n);
+        who.textContent = n;
+        screenName.style.display = "none";
+        screenRate.style.display = "block";
+        await loadMyRatings();
+        beerNoEl.focus();
+    });
+
+    document.querySelector("#reset").addEventListener("click", () => {
+        localStorage.removeItem(LS_NAME);
+        location.reload();
+    });
+
+    document.querySelector("#save").addEventListener("click", async () => {
+        const n = localStorage.getItem(LS_NAME);
+        if (!n) return alert("Mangler navn");
+
+        const beerNo = clampInt(beerNoEl.value, 1, 9999);
+        if (beerNo === null) return alert("Ugyldig ølnummer");
+
+        const smak = clampInt(smakEl.value, 0, 50);
+        const ettersmak = clampInt(ettersmakEl.value, 0, 20);
+        const farge = clampInt(fargeEl.value, 0, 20);
+        const lukt = clampInt(luktEl.value, 0, 10);
+
+        if (smak === null) return alert("Smak må være 0–50");
+        if (ettersmak === null) return alert("Ettersmak må være 0–20");
+        if (farge === null) return alert("Farge må være 0–20");
+        if (lukt === null) return alert("Lukt må være 0–10");
+
+        const total = smak + ettersmak + farge + lukt;
+
+        status.textContent = "Lagrer…";
+
+        const { error } = await supabase.from("ratings").upsert({
+            tasting_id: TASTING_ID,
+            beer_no: beerNo,
+            display_name: n,
+            smak,
+            ettersmak,
+            farge,
+            lukt,
+            score: total
+        });
+
+        if (error) {
+            console.error(error);
+            status.textContent = "Feil ved lagring";
+            return alert("Feil ved lagring: " + error.message);
+        }
+
+        status.textContent = "Lagret: " + new Date().toLocaleTimeString();
+        await loadMyRatings();
+
+        // klargjør neste øl
+        beerNoEl.focus();
+    });
+
+    boot().catch(e => {
+        console.error(e);
+        alert("Oppstart-feil: " + e.message);
+    });
+</script>
+</body>
+</html>
