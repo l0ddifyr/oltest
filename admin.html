@@ -55,6 +55,19 @@
     <select id="olsSelect">
       <option value="">Laster…</option>
     </select>
+    <div class="card" style="margin-top:12px">
+      <div class="muted">Join-kode</div>
+      <div class="row">
+        <div style="flex:2">
+          <div style="font-size:22px;font-weight:800;letter-spacing:2px" id="joinCodeText">—</div>
+          <div class="muted">Del denne med deltakerne.</div>
+        </div>
+        <div style="flex:1;min-width:140px">
+          <button id="copyJoin" type="button">Kopier</button>
+          <button id="regenJoin" type="button" style="margin-top:10px">Ny kode</button>
+        </div>
+      </div>
+    </div>
 
     <div class="row">
       <div>
@@ -171,7 +184,7 @@
   async function loadOlsMeta(id) {
     const { data, error } = await supabase
             .from("tastings")
-            .select("title, total_beers, revealed, current_beer_no")
+            .select("title, total_beers, revealed, join_code, current_beer_no")
             .eq("id", id)
             .single();
 
@@ -181,6 +194,7 @@
 
     titleEl.value = data.title;
     totalBeersEl.value = data.total_beers;
+    document.querySelector("#joinCodeText").textContent = data.join_code ?? "—";
     revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
     olsStatus.textContent = `Valgt: ${data.title}`;
   }
@@ -355,6 +369,38 @@
 
     await loadOlsMeta(currentOlsId);
   });
+
+  document.querySelector("#copyJoin").addEventListener("click", async () => {
+    const code = document.querySelector("#joinCodeText").textContent.trim();
+    if (!code || code === "—") return alert("Ingen join-kode å kopiere");
+    await navigator.clipboard.writeText(code);
+    alert("Join-kode kopiert ✅");
+  });
+
+  // Regenerer: sett join_code = null -> trigger lager ny (hvis du har set_join_code())
+  document.querySelector("#regenJoin").addEventListener("click", async () => {
+    try {
+      await requireAuth();
+      if (!currentOlsId) return alert("Velg ølsmaking først");
+      if (!confirm("Generere ny join-kode? Den gamle slutter å fungere.")) return;
+
+      const { error } = await supabase
+              .from("tastings")
+              .update({ join_code: null })
+              .eq("id", currentOlsId);
+
+      if (error) throw error;
+
+      // trigges ikke alltid på UPDATE hvis trigger kun er BEFORE INSERT.
+      // Derfor: hvis du kun har BEFORE INSERT, må du i stedet ha en UPDATE-trigger eller en RPC.
+      // Hvis du har fixpakken min som kun lager på INSERT, gi meg beskjed, så gir jeg deg riktig update-trigger.
+      await loadOlsMeta(currentOlsId);
+      alert("Ny join-kode ✅");
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
 
   // Init
   (async () => {
