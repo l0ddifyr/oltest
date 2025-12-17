@@ -37,7 +37,7 @@
 <div id="adminApp" style="display:none">
 
   <div class="card" style="text-align: center; border: 2px solid #d4a017;">
-    <div class="muted">NÅ SMERKES:</div>
+    <div class="muted">NÅ SMAKES:</div>
     <div id="currentBeerText">Øl #—</div>
     <div class="row" style="margin-top:15px">
       <button id="prevBeer" class="secondary">◀ Forrige</button>
@@ -46,9 +46,19 @@
   </div>
 
   <div class="card">
-    <h3>Deltakere som har stemt på dette ølet:</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <h3>Deltakere status</h3>
+      <div class="pill" id="totalVotersCount">0 påmeldte</div>
+    </div>
+
+    <div class="muted" style="margin-bottom:10px">Alle som deltar:</div>
+    <div id="allParticipants" style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+      <span class="muted">Ingen deltakere funnet ennå...</span>
+    </div>
+
+    <div class="muted" style="margin-bottom:10px">Har stemt på Øl #<span id="progressBeerNo">—</span>:</div>
     <div id="voterList" style="min-height: 40px;">
-      <span class="muted">Ingen stemmer registrert ennå...</span>
+      <span class="muted">Ingen stemmer på dette ølet ennå...</span>
     </div>
   </div>
 
@@ -159,11 +169,39 @@
   // SE HVEM SOM HAR STEMT
   async function updateVoterProgress() {
     if (!currentOlsId) return;
-    const { data } = await supabase.from("ratings").select("display_name").eq("tasting_id", currentOlsId).eq("beer_no", currentBeerNo);
-    if (!data || data.length === 0) {
-      voterList.innerHTML = `<span class="muted">Ingen stemmer ennå...</span>`;
+
+    // 1. Hent ALLE unike deltakere som har sendt inn minst én rating i denne testen
+    const { data: allRatings, error: err1 } = await supabase
+            .from("ratings")
+            .select("display_name, user_id, beer_no")
+            .eq("tasting_id", currentOlsId);
+
+    if (err1) return;
+
+    // Lag en unik liste over alle deltakere (bruker Set for å fjerne duplikater)
+    const participants = [...new Set(allRatings.map(r => r.display_name))];
+    const totalCount = participants.length;
+
+    // Oppdater teller
+    document.querySelector("#totalVotersCount").textContent = `${totalCount} ${totalCount === 1 ? 'deltaker' : 'deltakere'} totalt`;
+    document.querySelector("#progressBeerNo").textContent = currentBeerNo;
+
+    // Vis alle deltakere i den øverste listen
+    const allListEl = document.getElementById("allParticipants");
+    allListEl.innerHTML = participants.map(p => `<span class="pill">${p}</span>`).join("");
+
+    // 2. Finn ut hvem som har stemt på AKKURAT nåværende øl
+    const votedThisRound = allRatings
+            .filter(r => r.beer_no === currentBeerNo)
+            .map(r => r.display_name);
+
+    const currentListEl = document.getElementById("voterList");
+    if (votedThisRound.length === 0) {
+      currentListEl.innerHTML = `<span class="muted">Venter på stemmer...</span>`;
     } else {
-      voterList.innerHTML = data.map(v => `<span class="pill success">${v.display_name} ✅</span>`).join("");
+      currentListEl.innerHTML = votedThisRound.map(v =>
+              `<span class="pill success">${v} ✅</span>`
+      ).join("");
     }
   }
 
