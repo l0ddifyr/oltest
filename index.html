@@ -246,7 +246,8 @@
         try{
             const code = joinCodeEl.value.trim().toUpperCase();
             const name = nameEl.value.trim();
-            if(code.length !== 4) return alert("Join-kode må være 4 tegn");
+            const code = joinCodeEl.value.toUpperCase().replace(/[^A-Z0-9]/g, "").trim();
+            if (code.length !== 4) return alert("Join-kode må være 4 tegn");
             if(!name) return alert("Skriv inn navn");
 
             setupStatus.textContent = "Sjekker kode…";
