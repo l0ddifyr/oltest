@@ -5,21 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Juleøl-test 🍻</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background-color: #fcfcfc; color: #333; line-height: 1.5; }
-        h1 { text-align: center; color: #800000; }
-        .card { background: white; border: 1px solid #ddd; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        /* Mobil-først design */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #fcfcfc;
+        }
 
-        /* Slider Styling */
-        .score-row { margin-bottom: 20px; }
-        .score-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .score-header label { font-weight: 700; font-size: 16px; }
-        .score-val { font-size: 22px; font-weight: 900; color: #d4a017; background: #fff9eb; padding: 4px 12px; border-radius: 8px; border: 1px solid #ffeeba; min-width: 45px; text-align: center; }
-        input[type=range] { width: 100%; height: 12px; border-radius: 6px; background: #eee; outline: none; -webkit-appearance: none; margin: 10px 0; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: #d4a017; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        h1 { text-align: center; color: #800000; margin-bottom: 24px; }
 
-        input[type=text], input[type=number], button { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
-        button { background: #d4a017; color: white; border: none; font-weight: 700; cursor: pointer; transition: transform 0.1s, background 0.2s; margin-top: 10px; }
-        button:active { transform: scale(0.98); background: #b88a14; }
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Store, fete labels */
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        /* Massive input-felt for fingre */
+        input[type=text],
+        input[type=number],
+        input#joinCode,
+        input#name {
+            width: 100%;
+            height: 60px; /* Ekstra høyde for touch */
+            padding: 0 20px;
+            border-radius: 15px;
+            border: 2px solid #eee;
+            font-size: 20px; /* Hindrer auto-zoom på iPhone */
+            font-weight: 600;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #d4a017;
+            background: #fff;
+            outline: none;
+        }
+
+        /* Sentrert join-kode med store bokstaver */
+        #joinCode {
+            text-align: center;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-size: 28px;
+        }
+
+        /* Stor, tydelig knapp */
+        button#start {
+            width: 100%;
+            height: 65px;
+            background: #d4a017;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b88a14; /* 3D-effekt som føles klikkbar */
+        }
+
+        button#start:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #b88a14;
+        }
         button#reset { background: #f8f9fa; color: #666; border: 1px solid #ddd; margin-top: 20px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -35,15 +99,29 @@
 <h1>Juleøl-test 🍻</h1>
 
 <div id="screenSetup" class="card">
-    <h2>Velkommen!</h2>
-    <label for="joinCode">Join-kode (4 tegn)</label>
-    <input id="joinCode" placeholder="F.eks. K7M2" maxlength="4" autocapitalize="characters" autocomplete="off" style="margin-bottom: 15px;" />
+    <h2 style="margin-top:0; text-align:center;">Bli med på test</h2>
+
+    <label for="joinCode">Join-kode</label>
+    <input
+            id="joinCode"
+            placeholder="KODE"
+            maxlength="4"
+            autocapitalize="characters"
+            autocorrect="off"
+            autocomplete="off"
+            inputmode="text"
+    />
 
     <label for="name">Ditt Navn</label>
-    <input id="name" placeholder="Hvem smaker?" autocomplete="name" />
+    <input
+            id="name"
+            placeholder="F.eks. Ola"
+            autocomplete="name"
+            autocorrect="off"
+    />
 
-    <button id="start">Bli med i testen</button>
-    <div class="muted" id="setupStatus" style="margin-top:10px">—</div>
+    <button id="start">START SMAKING 🍻</button>
+    <div class="muted" id="setupStatus" style="margin-top:20px; text-align:center;">—</div>
 </div>
 
 <div id="screenRate" class="card" style="display:none">
