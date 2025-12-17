@@ -33,9 +33,18 @@
   <div class="muted" id="loginStatus">—</div>
 </div>
 
+
+
 <!-- ADMIN APP -->
 <div id="adminApp" style="display:none">
-
+  <div class="card">
+    <h2>Styr hvilket øl som smakes nå</h2>
+    <div class="row">
+      <button id="prevBeer" type="button">Forrige øl</button>
+      <button id="nextBeer" type="button">Neste øl</button>
+    </div>
+    <div class="muted">Nåværende: <b id="currentBeerText">—</b></div>
+  </div>
   <div class="card">
     <div class="row">
       <h2 style="flex:1">Ølsmaking</h2>
@@ -162,9 +171,11 @@
   async function loadOlsMeta(id) {
     const { data, error } = await supabase
             .from("tastings")
-            .select("title, total_beers, revealed")
+            .select("title, total_beers, revealed, current_beer_no")
             .eq("id", id)
             .single();
+
+    currentBeerText.textContent = `Øl #${data.current_beer_no} / ${data.total_beers}`;
 
     if (error) throw error;
 
@@ -173,6 +184,58 @@
     revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
     olsStatus.textContent = `Valgt: ${data.title}`;
   }
+
+  async function setCurrentBeer(newNo) {
+    if (!currentOlsId) return;
+
+    const n = clampInt(totalBeersEl.value, 1, 200);
+    if (n === null) return alert("Sett N først (1–200)");
+
+    if (newNo < 1) newNo = 1;
+    if (newNo > n) newNo = n;
+
+    const { error } = await supabase
+            .from("tastings")
+            .update({ current_beer_no: newNo })
+            .eq("id", currentOlsId);
+
+    if (error) return alert(error.message);
+
+    await loadOlsMeta(currentOlsId);
+  }
+
+  document.querySelector("#nextBeer").addEventListener("click", async () => {
+    try {
+      await requireAuth();
+      if (!currentOlsId) return alert("Velg ølsmaking først");
+
+      const { data, error } = await supabase
+              .from("tastings")
+              .select("current_beer_no")
+              .eq("id", currentOlsId)
+              .single();
+      if (error) throw error;
+
+      await setCurrentBeer((data.current_beer_no ?? 1) + 1);
+    } catch (e) { alert(e.message); }
+  });
+
+  document.querySelector("#prevBeer").addEventListener("click", async () => {
+    try {
+      await requireAuth();
+      if (!currentOlsId) return alert("Velg ølsmaking først");
+
+      const { data, error } = await supabase
+              .from("tastings")
+              .select("current_beer_no")
+              .eq("id", currentOlsId)
+              .single();
+      if (error) throw error;
+
+      await setCurrentBeer((data.current_beer_no ?? 1) - 1);
+    } catch (e) { alert(e.message); }
+  });
+
 
   async function refreshBeers() {
     const { data, error } = await supabase
@@ -220,6 +283,8 @@
     await loadOlsMeta(currentOlsId);
     await refreshBeers();
   });
+
+  const currentBeerText = document.querySelector("#currentBeerText");
 
   document.querySelector("#createOls").addEventListener("click", async () => {
     const title = (titleEl.value || "Juleøl-test").trim();

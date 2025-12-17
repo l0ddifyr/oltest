@@ -15,54 +15,66 @@
         .muted{color:#666;font-size:13px}
         .row{display:flex;gap:10px;flex-wrap:wrap}
         .row>*{flex:1;min-width:160px}
+        .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
     </style>
 </head>
 <body>
+
 <h1>Juleøl-test 🍻</h1>
 
 <div id="screenSetup" class="card">
     <h2>Start</h2>
 
-    <label for="olsSelect">Velg ølsmaking</label>
-    <select id="olsSelect">
-        <option value="">Laster…</option>
-    </select>
-    <div class="muted" id="olsInfo">—</div>
+    <label for="joinCode">Join-kode</label>
+    <input id="joinCode" placeholder="F.eks. K7M2" maxlength="4" autocapitalize="characters" autocomplete="off" />
 
     <label for="name">Navn</label>
     <input id="name" placeholder="Skriv navnet ditt" autocomplete="name" />
 
-    <button id="start" style="margin-top:12px;">Start</button>
-    <p class="muted">Når du har startet låses ølsmakingen.</p>
+    <button id="start" style="margin-top:12px">Start</button>
+    <div class="muted" id="setupStatus">—</div>
+    <p class="muted">Når du har startet låses ølsmakingen, og du scorer alltid “nåværende øl”.</p>
 </div>
 
 <div id="screenRate" class="card" style="display:none">
     <div class="muted">Ølsmaking: <b id="olsTitle">—</b></div>
     <div class="muted">Du: <b id="who">—</b></div>
 
-    <label>Velg øl-nummer</label>
-    <select id="beerSelect">
+    <div class="card">
+        <div class="row">
+            <div>
+                <div class="muted">Nå smaker vi</div>
+                <div style="font-size:20px;font-weight:700" id="currentBeerLabel">Øl #—</div>
+            </div>
+            <div style="text-align:right">
+                <span class="pill" id="livePill">Live</span>
+            </div>
+        </div>
+        <div class="muted" id="beerHelp">—</div>
+    </div>
+
+    <!-- Skjult/disabled dropdown (for debug), men vi holder UI enkelt -->
+    <select id="beerSelect" style="display:none">
         <option value="">Velg…</option>
     </select>
-    <div class="muted" id="beerHelp"></div>
 
     <label>Smak (0–50)</label>
-    <input id="smak" type="number" min="0" max="50" step="1" inputmode="numeric" />
+    <input id="smak" type="number" min="0" max="50" step="1" />
 
     <label>Ettersmak (0–20)</label>
-    <input id="ettersmak" type="number" min="0" max="20" step="1" inputmode="numeric" />
+    <input id="ettersmak" type="number" min="0" max="20" step="1" />
 
     <label>Farge (0–20)</label>
-    <input id="farge" type="number" min="0" max="20" step="1" inputmode="numeric" />
+    <input id="farge" type="number" min="0" max="20" step="1" />
 
     <label>Lukt (0–10)</label>
-    <input id="lukt" type="number" min="0" max="10" step="1" inputmode="numeric" />
+    <input id="lukt" type="number" min="0" max="10" step="1" />
 
     <div class="muted" id="totalPreview" style="margin-top:10px">Total: 0 / 100</div>
 
     <div class="row" style="margin-top:12px">
         <button id="save">Lagre / oppdater</button>
-        <button id="reset" type="button">Bytt navn / ølsmaking</button>
+        <button id="reset" type="button">Bytt navn / kode</button>
     </div>
 
     <div class="muted" id="status" style="margin-top:8px">—</div>
@@ -82,25 +94,22 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // LocalStorage keys
-    const LS_NAME = "juleol_name_v3";
-    const LS_OLSM = "juleol_ols_id_v3";
-    const LS_STARTED = "juleol_started_v3";
+    const LS_STARTED = "juleol_started";
+    const LS_NAME = "juleol_name";
+    const LS_TASTING = "juleol_ols_id";
 
-    // UI
-    const screenSetup = document.querySelector("#screenSetup");
-    const screenRate = document.querySelector("#screenRate");
+    const setup = document.querySelector("#screenSetup");
+    const rate = document.querySelector("#screenRate");
+    const joinCodeEl = document.querySelector("#joinCode");
+    const nameEl = document.querySelector("#name");
+    const setupStatus = document.querySelector("#setupStatus");
 
-    const olsSelect = document.querySelector("#olsSelect");
-    const olsInfo = document.querySelector("#olsInfo");
-    const nameInput = document.querySelector("#name");
-    const startBtn = document.querySelector("#start");
+    const olsTitleEl = document.querySelector("#olsTitle");
+    const whoEl = document.querySelector("#who");
 
-    const olsTitle = document.querySelector("#olsTitle");
-    const who = document.querySelector("#who");
-
-    const beerSelect = document.querySelector("#beerSelect");
+    const currentBeerLabel = document.querySelector("#currentBeerLabel");
     const beerHelp = document.querySelector("#beerHelp");
+    const livePill = document.querySelector("#livePill");
 
     const smakEl = document.querySelector("#smak");
     const ettersmakEl = document.querySelector("#ettersmak");
@@ -111,280 +120,220 @@
     const rows = document.querySelector("#rows");
     const status = document.querySelector("#status");
 
-    let sessionUserId = null;
-    let currentOlsId = null;
+    let tastingId = null;
+    let tastingTitle = "";
     let totalBeers = 0;
-    let currentOlsTitle = "";
+    let currentBeerNo = 1;
+    let userId = null;
+    let channel = null;
 
-    function clampInt(v, min, max) {
+    function clamp(v,min,max){
         const n = Number(v);
-        if (!Number.isFinite(n)) return null;
-        const i = Math.trunc(n);
-        if (i < min || i > max) return null;
-        return i;
+        if(!Number.isFinite(n) || n<min || n>max) return null;
+        return Math.trunc(n);
     }
 
-    function calcTotal100() {
-        const smak = clampInt(smakEl.value, 0, 50) ?? 0;
-        const ettersmak = clampInt(ettersmakEl.value, 0, 20) ?? 0;
-        const farge = clampInt(fargeEl.value, 0, 20) ?? 0;
-        const lukt = clampInt(luktEl.value, 0, 10) ?? 0;
-        const total = smak + ettersmak + farge + lukt;
-        totalPreview.textContent = `Total: ${total} / 100`;
-        return total;
+    function calcTotal(){
+        const t =
+            (clamp(smakEl.value,0,50)||0) +
+            (clamp(ettersmakEl.value,0,20)||0) +
+            (clamp(fargeEl.value,0,20)||0) +
+            (clamp(luktEl.value,0,10)||0);
+        totalPreview.textContent = `Total: ${t} / 100`;
+        return t;
     }
-    [smakEl, ettersmakEl, fargeEl, luktEl].forEach(el => el.addEventListener("input", calcTotal100));
+    [smakEl,ettersmakEl,fargeEl,luktEl].forEach(el => el.addEventListener("input", calcTotal));
 
-    async function ensureSession() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            sessionUserId = session.user.id;
-            return session;
-        }
+    async function ensureSession(){
+        const { data:{session} } = await supabase.auth.getSession();
+        if(session?.user){ userId = session.user.id; return; }
         const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) throw error;
-        sessionUserId = data.session.user.id;
-        return data.session;
+        if(error) throw error;
+        userId = data.session.user.id;
     }
 
-    // For deltakere: vis bare aktive ølsmakinger (revealed=false)
-    async function loadActiveOlsList() {
-        const { data, error } = await supabase
-            .from("tastings")
-            .select("id, title, total_beers, revealed, created_at")
-            .eq("revealed", false)
-            .order("created_at", { ascending: false });
-
-        if (error) throw error;
-
-        olsSelect.innerHTML =
-            `<option value="">Velg…</option>` +
-            (data ?? []).map(o => `<option value="${o.id}">${o.title} (N=${o.total_beers || 0})</option>`).join("");
-
-        if ((data ?? []).length === 0) {
-            olsInfo.textContent = "Ingen aktive ølsmakinger (admin må opprette en).";
-        }
+    async function lookupByCode(code){
+        const { data, error } = await supabase.rpc("get_ols_by_join_code", { p_code: code });
+        if(error || !data || data.length === 0) throw new Error("Ugyldig join-kode");
+        return data[0];
     }
 
-    async function loadOlsMeta(olsId) {
+    async function loadOlsMetaById(id){
         const { data, error } = await supabase
             .from("tastings")
-            .select("id, title, total_beers, revealed")
-            .eq("id", olsId)
+            .select("title,total_beers,current_beer_no")
+            .eq("id", id)
             .single();
-
-        if (error) throw error;
-
-        currentOlsTitle = data.title ?? "";
-        totalBeers = Number(data.total_beers || 0);
-
-        olsInfo.textContent = `${data.title} — N=${totalBeers} — ${data.revealed ? "REVEALED" : "skjult"}`;
-
-        const opts = [`<option value="">Velg…</option>`];
-        for (let i = 1; i <= totalBeers; i++) opts.push(`<option value="${i}">Øl #${i}</option>`);
-        beerSelect.innerHTML = opts.join("");
-        beerHelp.textContent = totalBeers > 0 ? `${totalBeers} øl i ølsmakingen.` : "Admin har ikke satt N ennå.";
+        if(error) throw error;
+        tastingTitle = data.title;
+        totalBeers = data.total_beers;
+        currentBeerNo = data.current_beer_no ?? 1;
     }
 
-    async function loadMyRatingsList() {
+    async function loadMyRatings(){
         const { data, error } = await supabase
             .from("ratings")
             .select("beer_no, score")
-            .eq("tasting_id", currentOlsId)
-            .eq("user_id", sessionUserId)
-            .order("beer_no", { ascending: true });
-
-        if (error) throw error;
+            .eq("tasting_id", tastingId)
+            .eq("user_id", userId)
+            .order("beer_no");
+        if(error) throw error;
 
         rows.innerHTML = "";
-        for (const r of (data ?? [])) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${r.beer_no}</td><td class="right">${r.score}</td>`;
-            rows.appendChild(tr);
+        for(const r of data||[]){
+            rows.innerHTML += `<tr><td>${r.beer_no}</td><td class="right">${r.score}</td></tr>`;
         }
     }
 
-    // Autofyll: når du velger øl, hent din eksisterende score for den ølen og fyll feltene
-    async function loadMyRatingForBeer(beerNo) {
+    async function loadMyRatingForCurrentBeer(){
         const { data, error } = await supabase
             .from("ratings")
-            .select("smak, ettersmak, farge, lukt")
-            .eq("tasting_id", currentOlsId)
-            .eq("user_id", sessionUserId)
-            .eq("beer_no", beerNo)
+            .select("smak,ettersmak,farge,lukt")
+            .eq("tasting_id", tastingId)
+            .eq("user_id", userId)
+            .eq("beer_no", currentBeerNo)
             .maybeSingle();
+        if(error) throw error;
 
-        if (error) throw error;
-
-        if (!data) {
-            // tomme felt hvis ingen finnes
-            smakEl.value = "";
-            ettersmakEl.value = "";
-            fargeEl.value = "";
-            luktEl.value = "";
-            calcTotal100();
+        if(!data){
+            smakEl.value = ettersmakEl.value = fargeEl.value = luktEl.value = "";
             status.textContent = "Ny registrering for dette ølet.";
-            return;
+        } else {
+            smakEl.value = data.smak ?? "";
+            ettersmakEl.value = data.ettersmak ?? "";
+            fargeEl.value = data.farge ?? "";
+            luktEl.value = data.lukt ?? "";
+            status.textContent = "Tidligere registrering lastet (du kan oppdatere).";
+        }
+        calcTotal();
+    }
+
+    function renderCurrentBeer(){
+        const safeNo = Math.max(1, Math.min(currentBeerNo, totalBeers || currentBeerNo));
+        currentBeerNo = safeNo;
+
+        currentBeerLabel.textContent = `Øl #${currentBeerNo}`;
+        beerHelp.textContent = totalBeers ? `Øl ${currentBeerNo} av ${totalBeers}` : `Øl #${currentBeerNo}`;
+    }
+
+    async function subscribeToCurrentBeer(){
+        if(channel){
+            supabase.removeChannel(channel);
+            channel = null;
         }
 
-        smakEl.value = data.smak ?? "";
-        ettersmakEl.value = data.ettersmak ?? "";
-        fargeEl.value = data.farge ?? "";
-        luktEl.value = data.lukt ?? "";
-        calcTotal100();
-        status.textContent = "Tidligere registrering lastet (du kan oppdatere).";
+        channel = supabase.channel(`ols-${tastingId}-live`)
+            .on("postgres_changes", {
+                event: "UPDATE",
+                schema: "public",
+                table: "tastings",
+                filter: `id=eq.${tastingId}`
+            }, async (payload) => {
+                const nextNo = payload?.new?.current_beer_no;
+                if(typeof nextNo === "number" && nextNo !== currentBeerNo){
+                    currentBeerNo = nextNo;
+                    renderCurrentBeer();
+                    livePill.textContent = "Live ✓";
+                    await loadMyRatingForCurrentBeer();
+                }
+            })
+            .subscribe((s) => {
+                livePill.textContent = (s === "SUBSCRIBED") ? "Live ✓" : "Live…";
+            });
     }
 
-    function lockSetupUI() {
-        olsSelect.disabled = true;
-        nameInput.disabled = true;
-        startBtn.disabled = true;
-    }
+    document.querySelector("#start").addEventListener("click", async ()=>{
+        try{
+            const code = joinCodeEl.value.trim().toUpperCase();
+            const name = nameEl.value.trim();
+            if(code.length !== 4) return alert("Join-kode må være 4 tegn");
+            if(!name) return alert("Skriv inn navn");
 
-    function goToRateScreen() {
-        screenSetup.style.display = "none";
-        screenRate.style.display = "block";
-        olsTitle.textContent = currentOlsTitle || "—";
-        who.textContent = localStorage.getItem(LS_NAME) || "—";
-        calcTotal100();
-    }
+            setupStatus.textContent = "Sjekker kode…";
+            const ols = await lookupByCode(code);
 
-    function goToSetupScreen() {
-        screenRate.style.display = "none";
-        screenSetup.style.display = "block";
-        olsSelect.disabled = false;
-        nameInput.disabled = false;
-        startBtn.disabled = false;
-    }
+            tastingId = ols.id;
+            localStorage.setItem(LS_STARTED,"1");
+            localStorage.setItem(LS_NAME,name);
+            localStorage.setItem(LS_TASTING,tastingId);
 
-    // Setup events
-    olsSelect.addEventListener("change", async () => {
-        if (localStorage.getItem(LS_STARTED) === "1") {
-            // låst – revert
-            olsSelect.value = currentOlsId || "";
-            return;
+            await loadOlsMetaById(tastingId);
+
+            olsTitleEl.textContent = tastingTitle;
+            whoEl.textContent = name;
+
+            renderCurrentBeer();
+            await loadMyRatings();
+            await loadMyRatingForCurrentBeer();
+            await subscribeToCurrentBeer();
+
+            setup.style.display="none";
+            rate.style.display="block";
+            setupStatus.textContent="—";
+        }catch(e){
+            alert(e.message);
+            setupStatus.textContent="—";
         }
-        const id = olsSelect.value || "";
-        localStorage.setItem(LS_OLSM, id);
-
-        if (!id) {
-            currentOlsId = null;
-            olsInfo.textContent = "Velg ølsmaking…";
-            return;
-        }
-
-        currentOlsId = id;
-        await loadOlsMeta(id);
     });
 
-    startBtn.addEventListener("click", async () => {
-        const name = nameInput.value.trim();
-        const olsId = olsSelect.value;
+    document.querySelector("#save").addEventListener("click", async ()=>{
+        const smak = clamp(smakEl.value,0,50);
+        const ettersmak = clamp(ettersmakEl.value,0,20);
+        const farge = clamp(fargeEl.value,0,20);
+        const lukt = clamp(luktEl.value,0,10);
+        if([smak,ettersmak,farge,lukt].includes(null)) return alert("Ugyldige poeng");
 
-        if (!olsId) return alert("Velg ølsmaking først 🙂");
-        if (!name) return alert("Skriv inn navn først 🙂");
-
-        localStorage.setItem(LS_NAME, name);
-        localStorage.setItem(LS_OLSM, olsId);
-        localStorage.setItem(LS_STARTED, "1");
-
-        currentOlsId = olsId;
-        await loadOlsMeta(olsId);
-
-        lockSetupUI();
-        goToRateScreen();
-        await loadMyRatingsList();
-        status.textContent = "Klar ✅";
-    });
-
-    document.querySelector("#reset").addEventListener("click", () => {
-        localStorage.removeItem(LS_NAME);
-        localStorage.removeItem(LS_OLSM);
-        localStorage.removeItem(LS_STARTED);
-        location.reload();
-    });
-
-    // Når du velger øl: hent eksisterende verdier (autofyll)
-    beerSelect.addEventListener("change", async () => {
-        const beerNo = clampInt(beerSelect.value, 1, totalBeers || 9999);
-        if (!beerNo) return;
-        await loadMyRatingForBeer(beerNo);
-    });
-
-    // Save
-    document.querySelector("#save").addEventListener("click", async () => {
-        const name = localStorage.getItem(LS_NAME);
-        if (!name) return alert("Mangler navn");
-        if (!currentOlsId) return alert("Mangler ølsmaking");
-
-        const beerNo = clampInt(beerSelect.value, 1, totalBeers || 9999);
-        if (beerNo === null) return alert("Velg øl-nummer");
-
-        const smak = clampInt(smakEl.value, 0, 50);
-        const ettersmak = clampInt(ettersmakEl.value, 0, 20);
-        const farge = clampInt(fargeEl.value, 0, 20);
-        const lukt = clampInt(luktEl.value, 0, 10);
-
-        if (smak === null) return alert("Smak må være 0–50");
-        if (ettersmak === null) return alert("Ettersmak må være 0–20");
-        if (farge === null) return alert("Farge må være 0–20");
-        if (lukt === null) return alert("Lukt må være 0–10");
-
-        const total = smak + ettersmak + farge + lukt;
-        status.textContent = "Lagrer…";
-
-        const payload = {
-            tasting_id: currentOlsId,
-            beer_no: beerNo,
-            user_id: sessionUserId, // ✅
-            display_name: name,
-            smak, ettersmak, farge, lukt,
-            score: total
-        };
+        const total = calcTotal();
+        status.textContent="Lagrer…";
 
         const { error } = await supabase
             .from("ratings")
-            .upsert(payload, { onConflict: "tasting_id,beer_no,user_id" }); // ✅ ingen duplicate constraint
+            .upsert({
+                tasting_id: tastingId,
+                beer_no: currentBeerNo,
+                user_id: userId,
+                display_name: localStorage.getItem(LS_NAME),
+                smak, ettersmak, farge, lukt,
+                score: total
+            }, { onConflict: "tasting_id,beer_no,user_id" });
 
-        if (error) return alert("Feil ved lagring: " + error.message);
+        if(error) return alert(error.message);
 
-        status.textContent = "Lagret/oppdatert ✅";
-        await loadMyRatingsList();
+        await loadMyRatings();
+        status.textContent="Lagret ✅";
     });
 
-    // Boot
-    async function boot() {
+    document.querySelector("#reset").addEventListener("click", ()=>{
+        localStorage.removeItem(LS_STARTED);
+        localStorage.removeItem(LS_NAME);
+        localStorage.removeItem(LS_TASTING);
+        if(channel) supabase.removeChannel(channel);
+        location.reload();
+    });
+
+    // BOOT (refresh)
+    (async ()=>{
         await ensureSession();
-        await loadActiveOlsList();
 
-        const started = localStorage.getItem(LS_STARTED) === "1";
-        const savedOls = localStorage.getItem(LS_OLSM) || "";
-        const savedName = localStorage.getItem(LS_NAME) || "";
+        if(localStorage.getItem(LS_STARTED)==="1"){
+            tastingId = localStorage.getItem(LS_TASTING);
+            const name = localStorage.getItem(LS_NAME) || "";
+            whoEl.textContent = name;
 
-        if (savedName) nameInput.value = savedName;
+            await loadOlsMetaById(tastingId);
 
-        if (savedOls) {
-            // dersom den ikke finnes i dropdown (fordi den er revealed nå),
-            // lar vi brukeren fortsette på den ølsmakingen likevel.
-            currentOlsId = savedOls;
-            olsSelect.value = savedOls;
-            await loadOlsMeta(savedOls);
-        } else {
-            olsInfo.textContent = "Velg ølsmaking…";
+            olsTitleEl.textContent = tastingTitle;
+            renderCurrentBeer();
+            await loadMyRatings();
+            await loadMyRatingForCurrentBeer();
+            await subscribeToCurrentBeer();
+
+            setup.style.display="none";
+            rate.style.display="block";
         }
-
-        if (started && savedOls && savedName) {
-            lockSetupUI();
-            goToRateScreen();
-            await loadMyRatingsList();
-        } else {
-            goToSetupScreen();
-        }
-
-        calcTotal100();
-    }
-
-    boot().catch(e => alert("Oppstart-feil: " + e.message));
+        calcTotal();
+    })();
 </script>
+
 </body>
 </html>
