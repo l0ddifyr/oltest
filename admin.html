@@ -10,116 +10,95 @@
     input, button, select { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
     button { background: #d4a017; color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
     button:active { transform: scale(0.98); }
-    button.secondary { background: #eee; color: #333; border: 1px solid #ddd; }
+    button.secondary { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
     label{ display: block; font-weight: 600; margin-top: 15px; margin-bottom: 5px; }
     .muted{ color: #666; font-size: 13px; }
-    .row{ display: flex; gap: 10px; flex-wrap: wrap; }
-    .row > * { flex: 1; min-width: 140px; }
+    .row{ display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .row > * { flex: 1; min-width: 120px; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
     .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: bold; background: #eee; margin: 2px; }
     .pill.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-    #currentBeerText { font-size: 24px; font-weight: 900; color: #800000; }
+    .pill.info { background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+    #currentBeerText { font-size: 28px; font-weight: 900; color: #800000; margin: 10px 0; }
+    .hidden { display: none !important; }
+    .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   </style>
 </head>
 <body>
 
-<h1>Admin-panel 🍺</h1>
+<h1>Admin 🍺</h1>
 
-<div id="loginCard" class="card">
+<div id="sectionLogin" class="card">
   <h2>Logg inn</h2>
-  <input id="email" placeholder="E-post" autocomplete="email" style="margin-bottom:10px" />
-  <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
+  <input id="email" placeholder="E-post" style="margin-bottom:10px" />
+  <input id="pass" placeholder="Passord" type="password" />
   <button id="login">Logg inn</button>
-  <div class="muted" id="loginStatus" style="margin-top:10px; text-align:center;">—</div>
 </div>
 
-<div id="adminApp" style="display:none">
+<div id="sectionPicker" class="card hidden">
+  <div class="header-info">
+    <h2>Dine ølsmakinger</h2>
+    <button id="logout1" class="secondary" style="width:auto; margin:0; padding: 8px 12px;">Logg ut</button>
+  </div>
+
+  <label>Velg eksisterende</label>
+  <select id="olsSelect"><option value="">Laster...</option></select>
+
+  <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
+
+  <h3>Opprett ny test</h3>
+  <input id="title" placeholder="Navn på testen (f.eks. Juleøl 2025)" style="margin-bottom:10px" />
+  <input id="totalBeers" type="number" placeholder="Antall øl (f.eks. 10)" />
+  <button id="createOls">Start ny ølsmaking</button>
+</div>
+
+<div id="sectionControl" class="hidden">
 
   <div class="card" style="text-align: center; border: 2px solid #d4a017;">
-    <div class="muted">NÅ SMAKES:</div>
+    <div class="header-info" style="justify-content: center; gap: 10px;">
+      <span class="pill info" id="displayJoinCode">KODE: —</span>
+      <button id="backToPicker" class="secondary" style="width:auto; margin:0; padding: 4px 10px; font-size: 12px;">Bytt test</button>
+    </div>
+
+    <div class="muted" id="displayTitle">Laster...</div>
     <div id="currentBeerText">Øl #—</div>
-    <div class="row" style="margin-top:15px">
+
+    <div class="row">
       <button id="prevBeer" class="secondary">◀ Forrige</button>
       <button id="nextBeer">Neste øl ▶</button>
     </div>
   </div>
 
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center">
-      <h3>Deltakere status</h3>
-      <div class="pill" id="totalVotersCount">0 påmeldte</div>
+    <div class="header-info">
+      <h3 style="margin:0">Deltakere</h3>
+      <span class="pill" id="totalVotersCount">0 påmeldte</span>
     </div>
+    <div class="muted">Alle i rommet:</div>
+    <div id="allParticipants" style="margin-bottom:15px; padding: 10px 0;">—</div>
 
-    <div class="muted" style="margin-bottom:10px">Alle som deltar:</div>
-    <div id="allParticipants" style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
-      <span class="muted">Ingen deltakere funnet ennå...</span>
-    </div>
-
-    <div class="muted" style="margin-bottom:10px">Har stemt på Øl #<span id="progressBeerNo">—</span>:</div>
-    <div id="voterList" style="min-height: 40px;">
-      <span class="muted">Ingen stemmer på dette ølet ennå...</span>
-    </div>
+    <div class="muted">Har stemt på Øl #<span id="progressBeerNo">—</span>:</div>
+    <div id="voterList" style="min-height: 40px;">—</div>
   </div>
 
   <div class="card">
-    <div class="row">
-      <h2 style="margin:0">Ølsmaking</h2>
-      <button id="logout" class="secondary" style="margin:0; width: auto; padding: 8px 15px;">Logg ut</button>
-    </div>
-
-    <label>Velg ølsmaking</label>
-    <select id="olsSelect"><option value="">Laster...</option></select>
-
-    <div class="card" style="margin-top:20px; background: #fff9eb;">
-      <div class="muted">Join-kode til deltakerne:</div>
-      <div class="row" style="align-items: center;">
-        <div style="font-size:32px; font-weight:900; letter-spacing:4px; color: #d4a017;" id="joinCodeText">—</div>
-        <div style="display:flex; flex-direction: column; gap: 5px;">
-          <button id="copyJoin" class="secondary" style="padding: 5px;">Kopier</button>
-          <button id="regenJoin" class="secondary" style="padding: 5px; font-size: 10px;">Ny kode</button>
-        </div>
+    <details>
+      <summary style="cursor:pointer; font-weight:600;">Fasit & Avansert</summary>
+      <div class="row" style="margin-top:15px">
+        <input id="beerNo" type="number" placeholder="Nr" style="flex:0.3" />
+        <input id="beerName" placeholder="Navn på øl" style="flex:1" />
+        <button id="saveBeer" style="margin:0; flex:0.5">Lagre</button>
       </div>
-    </div>
+      <table>
+        <tbody id="beerRows"></tbody>
+      </table>
 
-    <div class="row">
-      <div>
-        <label>Tittel</label>
-        <input id="title" placeholder="F.eks. Juleøl 2024" />
-      </div>
-      <div>
-        <label>Antall øl (N)</label>
-        <input id="totalBeers" type="number" placeholder="10" />
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <button id="createOls" class="secondary">Opprett ny</button>
-      <button id="saveMeta">Lagre endringer</button>
-    </div>
-    <div class="muted" id="olsStatus" style="margin-top:10px; text-align:center;">—</div>
+      <button id="reveal" style="background: #2e7d32; margin-top:20px;">🔓 Reveal for alle</button>
+      <div style="text-align:center; margin-top:10px;"><span class="pill" id="revealPill">Status: Skjult</span></div>
+    </details>
   </div>
 
-  <div class="card">
-    <h3>Fasit (hvilket øl er hva?)</h3>
-    <div class="muted" style="margin-bottom:10px">Deltakerne ser ikke dette før du trykker "Reveal".</div>
-
-    <div class="row">
-      <input id="beerNo" type="number" placeholder="Nr" style="flex:0.3" />
-      <input id="beerName" placeholder="Navn på øl" style="flex:1" />
-      <button id="saveBeer" style="flex:0.5; margin:0">Lagre</button>
-    </div>
-
-    <table>
-      <thead><tr><th>#</th><th>Navn på øl</th></tr></thead>
-      <tbody id="beerRows"></tbody>
-    </table>
-  </div>
-
-  <div class="card" style="text-align:center">
-    <button id="reveal" style="background: #2e7d32;">🔓 Reveal Resultater</button>
-    <div style="margin-top:10px"><span class="pill" id="revealPill">Status: Skjult</span></div>
-  </div>
 </div>
 
 <script type="module">
@@ -128,150 +107,133 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const loginCard = document.querySelector("#loginCard"), adminApp = document.querySelector("#adminApp");
-  const olsSelect = document.querySelector("#olsSelect"), titleEl = document.querySelector("#title");
-  const totalBeersEl = document.querySelector("#totalBeers"), olsStatus = document.querySelector("#olsStatus");
-  const beerRows = document.querySelector("#beerRows"), revealPill = document.querySelector("#revealPill");
-  const currentBeerText = document.querySelector("#currentBeerText"), voterList = document.querySelector("#voterList");
+  // Seksjoner
+  const sLogin = document.getElementById("sectionLogin"), sPicker = document.getElementById("sectionPicker"), sControl = document.getElementById("sectionControl");
+
+  // Elementer
+  const olsSelect = document.getElementById("olsSelect"), currentBeerText = document.getElementById("currentBeerText");
+  const displayJoinCode = document.getElementById("displayJoinCode"), displayTitle = document.getElementById("displayTitle");
+  const voterList = document.getElementById("voterList"), allParticipants = document.getElementById("allParticipants");
 
   let currentOlsId = null, currentBeerNo = 1;
 
-  // HJELPEFUNKSJONER
-  async function requireAuth() {
+  // VISNINGS-LOGIKK
+  function showStep(step) {
+    sLogin.classList.toggle("hidden", step !== "login");
+    sPicker.classList.toggle("hidden", step !== "picker");
+    sControl.classList.toggle("hidden", step !== "control");
+  }
+
+  // AUTH
+  async function checkSession() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error("Ikke innlogget");
-    return session;
-  }
-
-  // LAST DATA
-  async function loadMyOlsmakinger() {
-    const session = await requireAuth();
-    const { data, error } = await supabase.from("tastings").select("*").eq("created_by", session.user.id).order("created_at", { ascending: false });
-    if (error) throw error;
-    olsSelect.innerHTML = `<option value="">Velg en ølsmaking...</option>` +
-            data.map(o => `<option value="${o.id}">${o.title} (${o.total_beers} øl)</option>`).join("");
-  }
-
-  async function loadOlsMeta(id) {
-    const { data, error } = await supabase.from("tastings").select("*").eq("id", id).single();
-    if (error) throw error;
-    currentOlsId = id;
-    currentBeerNo = data.current_beer_no || 1;
-    titleEl.value = data.title;
-    totalBeersEl.value = data.total_beers;
-    currentBeerText.textContent = `Øl #${currentBeerNo} / ${data.total_beers}`;
-    document.querySelector("#joinCodeText").textContent = data.join_code || "—";
-    revealPill.textContent = data.revealed ? "Status: REVEALED ✅" : "Status: SKJULT 🔒";
-    revealPill.className = data.revealed ? "pill success" : "pill";
-    updateVoterProgress();
-  }
-
-  // SE HVEM SOM HAR STEMT
-  async function updateVoterProgress() {
-    if (!currentOlsId) return;
-
-    // 1. Hent ALLE unike deltakere som har sendt inn minst én rating i denne testen
-    const { data: allRatings, error: err1 } = await supabase
-            .from("ratings")
-            .select("display_name, user_id, beer_no")
-            .eq("tasting_id", currentOlsId);
-
-    if (err1) return;
-
-    // Lag en unik liste over alle deltakere (bruker Set for å fjerne duplikater)
-    const participants = [...new Set(allRatings.map(r => r.display_name))];
-    const totalCount = participants.length;
-
-    // Oppdater teller
-    document.querySelector("#totalVotersCount").textContent = `${totalCount} ${totalCount === 1 ? 'deltaker' : 'deltakere'} totalt`;
-    document.querySelector("#progressBeerNo").textContent = currentBeerNo;
-
-    // Vis alle deltakere i den øverste listen
-    const allListEl = document.getElementById("allParticipants");
-    allListEl.innerHTML = participants.map(p => `<span class="pill">${p}</span>`).join("");
-
-    // 2. Finn ut hvem som har stemt på AKKURAT nåværende øl
-    const votedThisRound = allRatings
-            .filter(r => r.beer_no === currentBeerNo)
-            .map(r => r.display_name);
-
-    const currentListEl = document.getElementById("voterList");
-    if (votedThisRound.length === 0) {
-      currentListEl.innerHTML = `<span class="muted">Venter på stemmer...</span>`;
+    if (session) {
+      showStep("picker");
+      loadTastings();
     } else {
-      currentListEl.innerHTML = votedThisRound.map(v =>
-              `<span class="pill success">${v} ✅</span>`
-      ).join("");
+      showStep("login");
     }
   }
 
-  // NAVIGATION
-  async function changeBeer(delta) {
-    if (!currentOlsId) return alert("Velg en ølsmaking først");
-    let nextNo = currentBeerNo + delta;
-    if (nextNo < 1) nextNo = 1;
-    const { error } = await supabase.from("tastings").update({ current_beer_no: nextNo }).eq("id", currentOlsId);
-    if (error) alert(error.message);
-    else loadOlsMeta(currentOlsId);
-  }
-
-  document.querySelector("#nextBeer").onclick = () => changeBeer(1);
-  document.querySelector("#prevBeer").onclick = () => changeBeer(-1);
-
-  // LOGIN / LOGOUT
-  document.querySelector("#login").onclick = async () => {
-    const email = document.querySelector("#email").value.trim();
-    const pass = document.querySelector("#pass").value;
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) alert(error.message); else location.reload();
+  document.getElementById("login").onclick = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById("email").value,
+      password: document.getElementById("pass").value
+    });
+    if (error) alert(error.message); else checkSession();
   };
 
-  document.querySelector("#logout").onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+  document.querySelectorAll("[id^='logout']").forEach(btn => btn.onclick = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+  });
 
-  // EVENTS
-  olsSelect.onchange = () => { if(olsSelect.value) { loadOlsMeta(olsSelect.value); refreshBeers(); } };
+  // DATA LASTING
+  async function loadTastings() {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("tastings").select("*").eq("created_by", user.id).order("created_at", { ascending: false });
+    olsSelect.innerHTML = `<option value="">Velg en ølsmaking...</option>` +
+            data.map(o => `<option value="${o.id}">${o.title}</option>`).join("");
+  }
 
-  document.querySelector("#saveMeta").onclick = async () => {
-    const { error } = await supabase.from("tastings").update({ title: titleEl.value, total_beers: totalBeersEl.value }).eq("id", currentOlsId);
-    if (error) alert(error.message); else olsStatus.textContent = "Lagret! ✅";
+  async function selectTasting(id) {
+    if(!id) return;
+    const { data, error } = await supabase.from("tastings").select("*").eq("id", id).single();
+    if(error) return;
+
+    currentOlsId = id;
+    currentBeerNo = data.current_beer_no || 1;
+    displayTitle.textContent = data.title;
+    displayJoinCode.textContent = `KODE: ${data.join_code}`;
+    currentBeerText.textContent = `Øl #${currentBeerNo} / ${data.total_beers}`;
+    document.getElementById("revealPill").textContent = data.revealed ? "Status: REVEALED ✅" : "Status: SKJULT 🔒";
+
+    showStep("control");
+    updateVoterProgress();
+    refreshBeers();
+  }
+
+  olsSelect.onchange = (e) => selectTasting(e.target.value);
+  document.getElementById("backToPicker").onclick = () => showStep("picker");
+
+  // KONTROLL-FUNKSJONER
+  async function changeBeer(delta) {
+    const nextNo = Math.max(1, currentBeerNo + delta);
+    const { error } = await supabase.from("tastings").update({ current_beer_no: nextNo }).eq("id", currentOlsId);
+    if (!error) {
+      currentBeerNo = nextNo;
+      currentBeerText.textContent = `Øl #${currentBeerNo} / ${document.getElementById("totalBeers").value || '?'}`;
+      updateVoterProgress();
+    }
+  }
+
+  document.getElementById("nextBeer").onclick = () => changeBeer(1);
+  document.getElementById("prevBeer").onclick = () => changeBeer(-1);
+
+  // DELTAKERE PROGRESS (Samme logikk som vi diskuterte)
+  async function updateVoterProgress() {
+    if (!currentOlsId || sControl.classList.contains("hidden")) return;
+    const { data: ratings } = await supabase.from("ratings").select("display_name, beer_no").eq("tasting_id", currentOlsId);
+
+    const participants = [...new Set(ratings.map(r => r.display_name))];
+    document.getElementById("totalVotersCount").textContent = `${participants.length} påmeldte`;
+    allParticipants.innerHTML = participants.map(p => `<span class="pill">${p}</span>`).join("");
+
+    const votedNow = ratings.filter(r => r.beer_no === currentBeerNo).map(r => r.display_name);
+    voterList.innerHTML = votedNow.length ? votedNow.map(v => `<span class="pill success">${v} ✅</span>`).join("") : `<span class="muted">Venter...</span>`;
+    document.getElementById("progressBeerNo").textContent = currentBeerNo;
+  }
+
+  // REVEAL OG FASIT
+  document.getElementById("saveBeer").onclick = async () => {
+    const no = document.getElementById("beerNo").value, name = document.getElementById("beerName").value;
+    await supabase.from("beers").upsert({ tasting_id: currentOlsId, beer_no: no, name: name }, { onConflict: "tasting_id,beer_no" });
+    document.getElementById("beerName").value = ""; refreshBeers();
   };
 
   async function refreshBeers() {
     const { data } = await supabase.from("beers").select("*").eq("tasting_id", currentOlsId).order("beer_no");
-    beerRows.innerHTML = data.map(b => `<tr><td>${b.beer_no}</td><td>${b.name}</td></tr>`).join("");
+    document.getElementById("beerRows").innerHTML = data.map(b => `<tr><td>${b.beer_no}</td><td>${b.name}</td></tr>`).join("");
   }
 
-  document.querySelector("#saveBeer").onclick = async () => {
-    const no = document.querySelector("#beerNo").value;
-    const name = document.querySelector("#beerName").value;
-    const { error } = await supabase.from("beers").upsert({ tasting_id: currentOlsId, beer_no: no, name: name }, { onConflict: "tasting_id,beer_no" });
-    if (error) alert(error.message); else { document.querySelector("#beerName").value = ""; refreshBeers(); }
+  document.getElementById("createOls").onclick = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("tastings").insert({
+      title: document.getElementById("title").value,
+      total_beers: document.getElementById("totalBeers").value
+    }).select().single();
+    if(error) alert(error.message); else selectTasting(data.id);
   };
 
-  document.querySelector("#reveal").onclick = async () => {
-    if (confirm("Er du sikker? Dette vil vise alle navnene på ølene til deltakerne!")) {
+  document.getElementById("reveal").onclick = async () => {
+    if(confirm("Vis fasiten for alle?")) {
       await supabase.from("tastings").update({ revealed: true }).eq("id", currentOlsId);
-      loadOlsMeta(currentOlsId);
+      selectTasting(currentOlsId);
     }
   };
 
-  document.querySelector("#copyJoin").onclick = () => {
-    navigator.clipboard.writeText(document.querySelector("#joinCodeText").textContent);
-    alert("Kopiert!");
-  };
-
-  // Polling for å se stemmer i sanntid
   setInterval(updateVoterProgress, 5000);
-
-  // INIT
-  (async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      adminApp.style.display = "block";
-      loginCard.style.display = "none";
-      loadMyOlsmakinger();
-    }
-  })();
+  checkSession();
 </script>
 </body>
 </html>
