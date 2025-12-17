@@ -3,81 +3,72 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resultater – Juleøl</title>
+  <title>Resultater – Juleøl 🍺</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body{font-family:system-ui;margin:16px}
-    .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
-    input,button,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
-    label{display:block;font-weight:600;margin-top:10px}
-    .muted{color:#666;font-size:13px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .row>*{flex:1;min-width:160px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px solid #eee;padding:8px 6px;text-align:left;vertical-align:top}
-    .right{text-align:right}
-    .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
-    details summary{cursor:pointer;font-weight:600}
-    pre{white-space:pre-wrap;word-break:break-word;border:1px solid #eee;padding:10px;border-radius:10px;margin-top:10px}
-    .errorBox{border:1px solid #f3c2c2;background:#fff5f5;border-radius:12px;padding:12px}
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background-color: #f8f9fa; color: #333; }
+    .card { background: white; border: 1px solid #ddd; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    h1, h2 { color: #800000; text-align: center; }
+
+    input, button, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+    button { background: #d4a017; color: white; border: none; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #eee; color: #333; border: 1px solid #ddd; margin-top: 10px; }
+
+    .chart-container { position: relative; height: 40vh; width: 100%; margin: 20px 0; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
+    th { background: #f1f1f1; font-weight: 700; }
+    .right { text-align: right; }
+
+    .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: bold; background: #eee; }
+    .pill.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+    .muted { color: #666; font-size: 13px; text-align: center; }
   </style>
 </head>
 <body>
-<h1>Resultater 🍺</h1>
 
-<!-- FATAL/BOOT STATUS -->
-<div id="bootMsg" class="card muted">Laster…</div>
+<h1>Resultater 🍻</h1>
 
-<!-- LOGIN (skjules når innlogget) -->
+<div id="bootMsg" class="card muted">Laster systemet...</div>
+
 <div id="loginCard" class="card" style="display:none">
-  <h2>Logg inn</h2>
-  <div class="row">
-    <input id="email" placeholder="E-post" autocomplete="email" />
-    <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
-  </div>
-  <button id="login" type="button" style="margin-top:10px">Logg inn</button>
-  <div class="muted" id="loginStatus">—</div>
+  <h2>Admin Logg inn</h2>
+  <input id="email" placeholder="E-post" autocomplete="email" style="margin-bottom:10px" />
+  <input id="pass" placeholder="Passord" type="password" />
+  <button id="login" style="margin-top:10px">Se resultater</button>
 </div>
 
-<!-- APP (skjules før innlogging) -->
 <div id="resultsApp" style="display:none">
   <div class="card">
-    <div class="row">
-      <h2 style="flex:2">Velg ølsmaking</h2>
-      <button id="logout" type="button" style="flex:1">Logg ut</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+      <h3 style="margin:0">Velg test</h3>
+      <button id="logout" class="secondary" style="width:auto; margin:0">Log ut</button>
     </div>
-
-    <select id="olsSelect">
-      <option value="">Laster…</option>
-    </select>
-
-    <div class="row" style="margin-top:10px">
-      <button id="load" type="button">Last resultater</button>
-      <button id="refreshList" type="button">Oppdater liste</button>
-    </div>
-
-    <div class="muted" id="loadStatus">—</div>
+    <select id="olsSelect"><option value="">Laster ølsmakinger...</option></select>
+    <button id="load" style="margin-top:10px">Oppdater Resultater 🔄</button>
   </div>
 
   <div id="content" style="display:none">
     <div class="card">
-      <h2>Status</h2>
-      <div class="row">
-        <div><span class="pill" id="revealPill">—</span></div>
-        <div class="muted" id="metaText">—</div>
+      <h2>Toppliste</h2>
+      <div class="chart-container">
+        <canvas id="resultsChart"></canvas>
       </div>
     </div>
 
     <div class="card">
-      <h2>Ranking per øl</h2>
+      <h2>Ranking detaljer</h2>
+      <div class="muted" id="metaStatus"></div>
       <table>
         <thead>
         <tr>
-          <th>Øl #</th>
-          <th>Navn</th>
+          <th>#</th>
+          <th>Øl / Navn</th>
           <th class="right">Snitt</th>
-          <th class="right">#</th>
-          <th class="right">Best</th>
-          <th class="right">Worst</th>
+          <th class="right">Stemmer</th>
         </tr>
         </thead>
         <tbody id="rankingRows"></tbody>
@@ -85,384 +76,181 @@
     </div>
 
     <div class="card">
-      <h2>Alle stemmer (hvem ga hva)</h2>
-
-      <div class="row">
-        <div>
-          <label>Filter: Øl</label>
-          <select id="filterBeer"><option value="">Alle</option></select>
-        </div>
-        <div>
-          <label>Filter: Person</label>
-          <select id="filterPerson"><option value="">Alle</option></select>
-        </div>
-        <div>
-          <label>Sorter</label>
+      <details>
+        <summary style="cursor:pointer; font-weight:bold">Se alle enkeltstemmer</summary>
+        <div class="grid" style="margin-top:15px">
           <select id="sortBy">
-            <option value="beer_no">Ølnr</option>
-            <option value="score_desc">Score (høy→lav)</option>
-            <option value="score_asc">Score (lav→høy)</option>
-            <option value="name">Navn</option>
-            <option value="time_desc">Tid (ny→gammel)</option>
-            <option value="time_asc">Tid (gammel→ny)</option>
+            <option value="score_desc">Høyest score</option>
+            <option value="beer_no">Ølnummer</option>
+            <option value="time_desc">Siste først</option>
           </select>
         </div>
-      </div>
-
-      <table>
-        <thead>
-        <tr>
-          <th>Øl #</th>
-          <th>Navn</th>
-          <th>Person</th>
-          <th class="right">Total</th>
-          <th class="right">Smak</th>
-          <th class="right">Etter</th>
-          <th class="right">Farge</th>
-          <th class="right">Lukt</th>
-          <th class="right">Tid</th>
-        </tr>
-        </thead>
-        <tbody id="votesRows"></tbody>
-      </table>
-
-      <details style="margin-top:12px">
-        <summary>Eksporter CSV (kopier)</summary>
-        <button id="copyCsv" type="button" style="margin-top:10px">Kopier CSV</button>
-        <pre id="csvOut"></pre>
+        <table style="font-size: 13px;">
+          <thead>
+          <tr>
+            <th>Øl</th>
+            <th>Person</th>
+            <th class="right">Score</th>
+          </tr>
+          </thead>
+          <tbody id="votesRows"></tbody>
+        </table>
       </details>
     </div>
   </div>
 </div>
 
 <script type="module">
-  const bootMsg = document.querySelector("#bootMsg");
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-  function fatal(msg, extra="") {
-    bootMsg.classList.remove("muted");
-    bootMsg.innerHTML = `
-        <div class="errorBox">
-          <b>Kunne ikke starte results.html</b><br/>
-          ${msg}<br/>
-          <div class="muted" style="margin-top:8px">${extra}</div>
-        </div>
-      `;
-  }
-
-  // 1) Last config.js robust
-  let cfg;
-  try {
-    cfg = await import("./config.js");
-  } catch (e) {
-    fatal(
-            "Finner ikke ./config.js (eller den kan ikke lastes).",
-            "Sjekk at config.js ligger i samme mappe som results.html, og at du åpner siden via http(s) (GitHub Pages / lokal server) – ikke file://."
-    );
-    console.error("config.js import failed", e);
-    throw e;
-  }
-
-  // 2) Last supabase-js robust
-  let createClient;
-  try {
-    ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
-  } catch (e) {
-    fatal(
-            "Klarte ikke laste supabase-js fra CDN.",
-            "Sjekk nett/annonsesperre (adblock) eller prøv et annet nett."
-    );
-    console.error("supabase-js import failed", e);
-    throw e;
-  }
-
-  // 3) App
-  const supabase = createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-
-  const loginCard = document.querySelector("#loginCard");
-  const resultsApp = document.querySelector("#resultsApp");
-  const loginStatus = document.querySelector("#loginStatus");
-  const loadStatus = document.querySelector("#loadStatus");
-
-  const olsSelect = document.querySelector("#olsSelect");
-  const content = document.querySelector("#content");
-
-  const revealPill = document.querySelector("#revealPill");
-  const metaText = document.querySelector("#metaText");
-
-  const rankingRows = document.querySelector("#rankingRows");
-  const votesRows = document.querySelector("#votesRows");
-
-  const filterBeer = document.querySelector("#filterBeer");
-  const filterPerson = document.querySelector("#filterPerson");
-  const sortBy = document.querySelector("#sortBy");
-
-  const csvOut = document.querySelector("#csvOut");
-
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let myChart = null;
   let beersMap = new Map();
   let votes = [];
-  let ranking = [];
+  let isRevealed = false;
 
-  function showLogin() {
-    bootMsg.style.display = "none";
-    loginCard.style.display = "block";
-    resultsApp.style.display = "none";
-    content.style.display = "none";
-  }
+  const resultsApp = document.querySelector("#resultsApp"), loginCard = document.querySelector("#loginCard");
+  const olsSelect = document.querySelector("#olsSelect"), content = document.querySelector("#content");
+  const rankingRows = document.querySelector("#rankingRows"), votesRows = document.querySelector("#votesRows");
 
-  function showApp() {
-    bootMsg.style.display = "none";
-    loginCard.style.display = "none";
-    resultsApp.style.display = "block";
-  }
-
-  async function requireAuth() {
+  // AUTH
+  async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error("Du må logge inn.");
-    return session;
-  }
-
-  function fmtTime(iso) {
-    if (!iso) return "";
-    return new Date(iso).toLocaleString();
-  }
-
-  function csvEscape(v) {
-    const s = (v ?? "").toString();
-    if (s.includes(",") || s.includes("\"") || s.includes("\n")) return `"${s.replaceAll("\"","\"\"")}"`;
-    return s;
-  }
-
-  async function loadMyOlsmakinger() {
-    const session = await requireAuth();
-    const uid = session.user.id;
-
-    const { data, error } = await supabase
-            .from("tastings")
-            .select("id, title, total_beers, created_at, created_by")
-            .eq("created_by", uid)
-            .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    olsSelect.innerHTML =
-            `<option value="">Velg…</option>` +
-            (data ?? []).map(o => `<option value="${o.id}">${o.title} (N=${o.total_beers || 0})</option>`).join("");
-
-    loadStatus.textContent = (data?.length ?? 0) ? "Velg en ølsmaking og trykk “Last resultater”." : "Ingen ølsmakinger på denne admin-brukeren.";
-  }
-
-  async function loadMeta(olsId) {
-    const { data, error } = await supabase
-            .from("tastings")
-            .select("title, total_beers, revealed, join_code, current_beer_no")
-            .eq("id", olsId)
-            .single();
-
-    if (error) throw error;
-
-    revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
-    metaText.textContent = `${data.title} — N=${data.total_beers} — Join-kode: ${data.join_code ?? "—"} — Nå: Øl #${data.current_beer_no ?? 1}`;
-  }
-
-  async function loadBeersPublic(olsId) {
-    const { data, error } = await supabase
-            .from("beers_public")
-            .select("beer_no, name")
-            .eq("tasting_id", olsId)
-            .order("beer_no", { ascending: true });
-
-    if (error) throw error;
-    beersMap = new Map((data ?? []).map(x => [x.beer_no, x.name]));
-  }
-
-  async function loadAllVotes(olsId) {
-    const { data, error } = await supabase
-            .from("ratings")
-            .select("beer_no, score, smak, ettersmak, farge, lukt, display_name, updated_at, created_at")
-            .eq("tasting_id", olsId);
-
-    if (error) throw error;
-    votes = (data ?? []).map(v => ({ ...v, time: v.updated_at ?? v.created_at }));
-  }
-
-  function buildRanking() {
-    const byBeer = new Map();
-    for (const v of votes) {
-      if (!byBeer.has(v.beer_no)) byBeer.set(v.beer_no, { beer_no: v.beer_no, sum:0, count:0, min:Infinity, max:-Infinity });
-      const a = byBeer.get(v.beer_no);
-      a.sum += Number(v.score);
-      a.count++;
-      a.min = Math.min(a.min, Number(v.score));
-      a.max = Math.max(a.max, Number(v.score));
-    }
-    ranking = [...byBeer.values()].map(r => ({
-      beer_no: r.beer_no,
-      avg: r.count ? r.sum / r.count : 0,
-      count: r.count,
-      min: isFinite(r.min) ? r.min : null,
-      max: isFinite(r.max) ? r.max : null
-    })).sort((a,b) => b.avg - a.avg);
-  }
-
-  function populateFilters() {
-    const beerNos = [...new Set(votes.map(v => v.beer_no))].sort((a,b) => a-b);
-    filterBeer.innerHTML = `<option value="">Alle</option>` + beerNos.map(n => `<option value="${n}">${n}</option>`).join("");
-
-    const people = [...new Set(votes.map(v => v.display_name))].sort((a,b) => a.localeCompare(b));
-    filterPerson.innerHTML = `<option value="">Alle</option>` + people.map(p => `<option value="${encodeURIComponent(p)}">${p}</option>`).join("");
-  }
-
-  function renderRanking() {
-    rankingRows.innerHTML = "";
-    for (const r of ranking) {
-      const name = beersMap.get(r.beer_no) ?? null;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-          <td>${r.beer_no}</td>
-          <td>${name ? name : "<span class='muted'>(skjult)</span>"}</td>
-          <td class="right">${r.avg.toFixed(2)}</td>
-          <td class="right">${r.count}</td>
-          <td class="right">${r.max ?? ""}</td>
-          <td class="right">${r.min ?? ""}</td>
-        `;
-      rankingRows.appendChild(tr);
-    }
-  }
-
-  function getFilteredVotes() {
-    let out = [...votes];
-
-    const b = filterBeer.value;
-    if (b) out = out.filter(v => String(v.beer_no) === String(b));
-
-    const p = filterPerson.value;
-    if (p) out = out.filter(v => v.display_name === decodeURIComponent(p));
-
-    switch (sortBy.value) {
-      case "beer_no": out.sort((a,b) => a.beer_no - b.beer_no); break;
-      case "name": out.sort((a,b) => a.display_name.localeCompare(b.display_name)); break;
-      case "score_desc": out.sort((a,b) => b.score - a.score); break;
-      case "score_asc": out.sort((a,b) => a.score - b.score); break;
-      case "time_desc": out.sort((a,b) => new Date(b.time) - new Date(a.time)); break;
-      case "time_asc": out.sort((a,b) => new Date(a.time) - new Date(b.time)); break;
-    }
-    return out;
-  }
-
-  function buildCsv(list) {
-    const header = ["beer_no","beer_name","person","score","smak","ettersmak","farge","lukt","time"];
-    const lines = [header.join(",")];
-
-    for (const v of list) {
-      const beerName = beersMap.get(v.beer_no) ?? "";
-      lines.push([
-        v.beer_no, beerName, v.display_name, v.score, v.smak, v.ettersmak, v.farge, v.lukt, fmtTime(v.time)
-      ].map(csvEscape).join(","));
-    }
-    csvOut.textContent = lines.join("\n");
-  }
-
-  function renderVotes() {
-    const list = getFilteredVotes();
-    votesRows.innerHTML = "";
-    for (const v of list) {
-      const beerName = beersMap.get(v.beer_no) ?? null;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-          <td>${v.beer_no}</td>
-          <td>${beerName ? beerName : "<span class='muted'>(skjult)</span>"}</td>
-          <td>${v.display_name}</td>
-          <td class="right"><b>${v.score}</b></td>
-          <td class="right">${v.smak}</td>
-          <td class="right">${v.ettersmak}</td>
-          <td class="right">${v.farge}</td>
-          <td class="right">${v.lukt}</td>
-          <td class="right">${fmtTime(v.time)}</td>
-        `;
-      votesRows.appendChild(tr);
-    }
-    buildCsv(list);
-  }
-
-  document.querySelector("#copyCsv").addEventListener("click", async () => {
-    const txt = csvOut.textContent || "";
-    if (!txt) return alert("Ingen CSV å kopiere");
-    await navigator.clipboard.writeText(txt);
-    alert("CSV kopiert ✅");
-  });
-
-  [filterBeer, filterPerson, sortBy].forEach(el => el.addEventListener("change", renderVotes));
-
-  // EVENTS: login/logout/load
-  document.querySelector("#login").addEventListener("click", async () => {
-    try {
-      loginStatus.textContent = "Logger inn…";
-      const email = document.querySelector("#email").value.trim();
-      const pass = document.querySelector("#pass").value;
-
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (error) throw error;
-
+    if (session) {
       showApp();
-      await loadMyOlsmakinger();
-      loginStatus.textContent = "—";
-    } catch (e) {
-      alert(e.message);
-      loginStatus.textContent = "Feil ved innlogging";
-    }
-  });
-
-  document.querySelector("#logout").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    showLogin();
-  });
-
-  document.querySelector("#refreshList").addEventListener("click", async () => {
-    try {
-      await requireAuth();
-      await loadMyOlsmakinger();
-      loadStatus.textContent = "Liste oppdatert ✅";
-    } catch (e) {
-      alert(e.message);
-    }
-  });
-
-  document.querySelector("#load").addEventListener("click", async () => {
-    try {
-      await requireAuth();
-      const id = olsSelect.value;
-      if (!id) return alert("Velg ølsmaking");
-
-      loadStatus.textContent = "Laster…";
-
-      await loadMeta(id);
-      await loadBeersPublic(id);
-      await loadAllVotes(id);
-
-      buildRanking();
-      populateFilters();
-      renderRanking();
-      renderVotes();
-
-      content.style.display = "block";
-      loadStatus.textContent = `Lastet ✅ (${votes.length} stemmer)`;
-    } catch (e) {
-      alert(e.message);
-      loadStatus.textContent = "Feil";
-    }
-  });
-
-  // INIT
-  (async () => {
-    // hvis du er logget inn fra før
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      showApp();
-      await loadMyOlsmakinger();
+      loadTastings();
     } else {
       showLogin();
     }
-  })();
+  }
+
+  function showLogin() {
+    loginCard.style.display = "block";
+    resultsApp.style.display = "none";
+    document.querySelector("#bootMsg").style.display = "none";
+  }
+
+  function showApp() {
+    resultsApp.style.display = "block";
+    loginCard.style.display = "none";
+    document.querySelector("#bootMsg").style.display = "none";
+  }
+
+  document.querySelector("#login").onclick = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.querySelector("#email").value,
+      password: document.querySelector("#pass").value
+    });
+    if (error) alert(error.message); else checkAuth();
+  };
+
+  document.querySelector("#logout").onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+
+  // DATA LASTING
+  async function loadTastings() {
+    const { data } = await supabase.from("tastings").select("*").order("created_at", { ascending: false });
+    olsSelect.innerHTML = `<option value="">Velg ølsmaking...</option>` +
+            data.map(o => `<option value="${o.id}">${o.title}</option>`).join("");
+  }
+
+  async function loadAllData() {
+    const id = olsSelect.value;
+    if (!id) return;
+
+    // 1. Last Meta & Reveal status
+    const { data: meta } = await supabase.from("tastings").select("*").eq("id", id).single();
+    isRevealed = meta.revealed;
+    document.querySelector("#metaStatus").innerHTML = `Status: ${isRevealed ? "<span class='pill success'>REVEALED ✅</span>" : "<span class='pill'>SKJULT 🔒</span>"}`;
+
+    // 2. Last Ølnavn (beers_public er en view som tar hensyn til revealed)
+    const { data: beers } = await supabase.from("beers_public").select("*").eq("tasting_id", id);
+    beersMap = new Map(beers.map(b => [b.beer_no, b.name]));
+
+    // 3. Last Stemmer
+    const { data: r } = await supabase.from("ratings").select("*").eq("tasting_id", id);
+    votes = r;
+
+    processAndRender();
+  }
+
+  function processAndRender() {
+    const beerStats = {};
+    votes.forEach(v => {
+      if (!beerStats[v.beer_no]) beerStats[v.beer_no] = { beer_no: v.beer_no, sum: 0, count: 0 };
+      beerStats[v.beer_no].sum += v.score;
+      beerStats[v.beer_no].count++;
+    });
+
+    const ranking = Object.values(beerStats).map(b => ({
+      ...b,
+      avg: b.sum / b.count,
+      name: beersMap.get(b.beer_no) || `Øl #${b.beer_no}`
+    })).sort((a, b) => b.avg - a.avg);
+
+    renderChart(ranking);
+    renderTable(ranking);
+    renderAllVotes();
+    content.style.display = "block";
+  }
+
+  function renderChart(ranking) {
+    const ctx = document.getElementById('resultsChart').getContext('2d');
+    if (myChart) myChart.destroy();
+
+    myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ranking.map(r => r.name),
+        datasets: [{
+          label: 'Gjennomsnittsscore',
+          data: ranking.map(r => r.avg.toFixed(1)),
+          backgroundColor: '#d4a017',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+      }
+    });
+  }
+
+  function renderTable(ranking) {
+    rankingRows.innerHTML = ranking.map(r => `
+      <tr>
+        <td><b>${r.beer_no}</b></td>
+        <td>${r.name}</td>
+        <td class="right"><b>${r.avg.toFixed(1)}</b></td>
+        <td class="right muted">${r.count} stk</td>
+      </tr>
+    `).join("");
+  }
+
+  function renderAllVotes() {
+    let sortedVotes = [...votes];
+    const sortVal = document.querySelector("#sortBy").value;
+
+    if(sortVal === "score_desc") sortedVotes.sort((a,b) => b.score - a.score);
+    if(sortVal === "beer_no") sortedVotes.sort((a,b) => a.beer_no - b.beer_no);
+    if(sortVal === "time_desc") sortedVotes.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+    votesRows.innerHTML = sortedVotes.map(v => `
+      <tr>
+        <td>Øl ${v.beer_no}</td>
+        <td>${v.display_name}</td>
+        <td class="right">${v.score}</td>
+      </tr>
+    `).join("");
+  }
+
+  document.querySelector("#load").onclick = loadAllData;
+  document.querySelector("#sortBy").onchange = renderAllVotes;
+  olsSelect.onchange = loadAllData;
+
+  checkAuth();
 </script>
 </body>
 </html>

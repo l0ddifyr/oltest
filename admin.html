@@ -3,68 +3,71 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin – Juleøl</title>
+  <title>Admin – Juleøl-test 🍺</title>
   <style>
-    body{font-family:system-ui;margin:16px}
-    .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
-    input,button,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
-    label{display:block;font-weight:600;margin-top:10px}
-    .muted{color:#666;font-size:13px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .row>*{flex:1;min-width:160px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px solid #eee;padding:8px 6px;text-align:left}
-    .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
+    body{font-family:system-ui, -apple-system, sans-serif; margin:16px; background-color: #f4f4f4; color: #333;}
+    .card{background: white; border: 1px solid #ddd; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+    input, button, select { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+    button { background: #d4a017; color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: #eee; color: #333; border: 1px solid #ddd; }
+    label{ display: block; font-weight: 600; margin-top: 15px; margin-bottom: 5px; }
+    .muted{ color: #666; font-size: 13px; }
+    .row{ display: flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 140px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
+    .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: bold; background: #eee; margin: 2px; }
+    .pill.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    #currentBeerText { font-size: 24px; font-weight: 900; color: #800000; }
   </style>
 </head>
 <body>
-<h1>Admin 🍺</h1>
 
-<!-- LOGIN -->
+<h1>Admin-panel 🍺</h1>
+
 <div id="loginCard" class="card">
   <h2>Logg inn</h2>
-  <div class="row">
-    <input id="email" placeholder="E-post" autocomplete="email" />
-    <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
-  </div>
-  <div class="row" style="margin-top:10px">
-    <button id="login">Logg inn</button>
-  </div>
-  <div class="muted" id="loginStatus">—</div>
+  <input id="email" placeholder="E-post" autocomplete="email" style="margin-bottom:10px" />
+  <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
+  <button id="login">Logg inn</button>
+  <div class="muted" id="loginStatus" style="margin-top:10px; text-align:center;">—</div>
 </div>
 
-
-
-<!-- ADMIN APP -->
 <div id="adminApp" style="display:none">
-  <div class="card">
-    <h2>Styr hvilket øl som smakes nå</h2>
-    <div class="row">
-      <button id="prevBeer" type="button">Forrige øl</button>
-      <button id="nextBeer" type="button">Neste øl</button>
+
+  <div class="card" style="text-align: center; border: 2px solid #d4a017;">
+    <div class="muted">NÅ SMERKES:</div>
+    <div id="currentBeerText">Øl #—</div>
+    <div class="row" style="margin-top:15px">
+      <button id="prevBeer" class="secondary">◀ Forrige</button>
+      <button id="nextBeer">Neste øl ▶</button>
     </div>
-    <div class="muted">Nåværende: <b id="currentBeerText">—</b></div>
   </div>
+
+  <div class="card">
+    <h3>Deltakere som har stemt på dette ølet:</h3>
+    <div id="voterList" style="min-height: 40px;">
+      <span class="muted">Ingen stemmer registrert ennå...</span>
+    </div>
+  </div>
+
   <div class="card">
     <div class="row">
-      <h2 style="flex:1">Ølsmaking</h2>
-      <button id="logout" type="button">Logg ut</button>
+      <h2 style="margin:0">Ølsmaking</h2>
+      <button id="logout" class="secondary" style="margin:0; width: auto; padding: 8px 15px;">Logg ut</button>
     </div>
 
-    <label>Velg eksisterende</label>
-    <select id="olsSelect">
-      <option value="">Laster…</option>
-    </select>
-    <div class="card" style="margin-top:12px">
-      <div class="muted">Join-kode</div>
-      <div class="row">
-        <div style="flex:2">
-          <div style="font-size:22px;font-weight:800;letter-spacing:2px" id="joinCodeText">—</div>
-          <div class="muted">Del denne med deltakerne.</div>
-        </div>
-        <div style="flex:1;min-width:140px">
-          <button id="copyJoin" type="button">Kopier</button>
-          <button id="regenJoin" type="button" style="margin-top:10px">Ny kode</button>
+    <label>Velg ølsmaking</label>
+    <select id="olsSelect"><option value="">Laster...</option></select>
+
+    <div class="card" style="margin-top:20px; background: #fff9eb;">
+      <div class="muted">Join-kode til deltakerne:</div>
+      <div class="row" style="align-items: center;">
+        <div style="font-size:32px; font-weight:900; letter-spacing:4px; color: #d4a017;" id="joinCodeText">—</div>
+        <div style="display:flex; flex-direction: column; gap: 5px;">
+          <button id="copyJoin" class="secondary" style="padding: 5px;">Kopier</button>
+          <button id="regenJoin" class="secondary" style="padding: 5px; font-size: 10px;">Ny kode</button>
         </div>
       </div>
     </div>
@@ -72,53 +75,40 @@
     <div class="row">
       <div>
         <label>Tittel</label>
-        <input id="title" placeholder="Juleøl-test" />
+        <input id="title" placeholder="F.eks. Juleøl 2024" />
       </div>
       <div>
         <label>Antall øl (N)</label>
-        <input id="totalBeers" inputmode="numeric" placeholder="10" />
+        <input id="totalBeers" type="number" placeholder="10" />
       </div>
     </div>
 
     <div class="row" style="margin-top:10px">
-      <button id="createOls" type="button">Opprett ny</button>
-      <button id="saveMeta" type="button">Lagre</button>
-      <button id="reloadOls" type="button">Oppdater liste</button>
+      <button id="createOls" class="secondary">Opprett ny</button>
+      <button id="saveMeta">Lagre endringer</button>
     </div>
-
-    <div class="muted" id="olsStatus">—</div>
+    <div class="muted" id="olsStatus" style="margin-top:10px; text-align:center;">—</div>
   </div>
 
   <div class="card">
-    <h2>Logg øl (skjult for deltakere)</h2>
+    <h3>Fasit (hvilket øl er hva?)</h3>
+    <div class="muted" style="margin-bottom:10px">Deltakerne ser ikke dette før du trykker "Reveal".</div>
 
     <div class="row">
-      <div>
-        <label>Øl-nummer</label>
-        <input id="beerNo" inputmode="numeric" placeholder="3" />
-      </div>
-      <div>
-        <label>Ølnavn</label>
-        <input id="beerName" placeholder="Mack Juleøl" />
-      </div>
+      <input id="beerNo" type="number" placeholder="Nr" style="flex:0.3" />
+      <input id="beerName" placeholder="Navn på øl" style="flex:1" />
+      <button id="saveBeer" style="flex:0.5; margin:0">Lagre</button>
     </div>
 
-    <button id="saveBeer" type="button" style="margin-top:10px">
-      Lagre / oppdater øl
-    </button>
-
     <table>
-      <thead><tr><th>#</th><th>Navn</th></tr></thead>
+      <thead><tr><th>#</th><th>Navn på øl</th></tr></thead>
       <tbody id="beerRows"></tbody>
     </table>
   </div>
 
-  <div class="card">
-    <h2>Reveal</h2>
-    <div class="row">
-      <button id="reveal" type="button">Reveal ølsmaking</button>
-      <span class="pill" id="revealPill">—</span>
-    </div>
+  <div class="card" style="text-align:center">
+    <button id="reveal" style="background: #2e7d32;">🔓 Reveal Resultater</button>
+    <div style="margin-top:10px"><span class="pill" id="revealPill">Status: Skjult</span></div>
   </div>
 </div>
 
@@ -128,288 +118,120 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const loginCard = document.querySelector("#loginCard");
-  const adminApp = document.querySelector("#adminApp");
-  const loginStatus = document.querySelector("#loginStatus");
+  const loginCard = document.querySelector("#loginCard"), adminApp = document.querySelector("#adminApp");
+  const olsSelect = document.querySelector("#olsSelect"), titleEl = document.querySelector("#title");
+  const totalBeersEl = document.querySelector("#totalBeers"), olsStatus = document.querySelector("#olsStatus");
+  const beerRows = document.querySelector("#beerRows"), revealPill = document.querySelector("#revealPill");
+  const currentBeerText = document.querySelector("#currentBeerText"), voterList = document.querySelector("#voterList");
 
-  const olsSelect = document.querySelector("#olsSelect");
-  const titleEl = document.querySelector("#title");
-  const totalBeersEl = document.querySelector("#totalBeers");
-  const olsStatus = document.querySelector("#olsStatus");
-  const beerRows = document.querySelector("#beerRows");
-  const revealPill = document.querySelector("#revealPill");
+  let currentOlsId = null, currentBeerNo = 1;
 
-  let currentOlsId = null;
-
-  function clampInt(v, min, max) {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return null;
-    const i = Math.trunc(n);
-    if (i < min || i > max) return null;
-    return i;
-  }
-
-  function showAdmin() {
-    loginCard.style.display = "none";
-    adminApp.style.display = "block";
-  }
-
-  function showLogin() {
-    adminApp.style.display = "none";
-    loginCard.style.display = "block";
-  }
-
+  // HJELPEFUNKSJONER
   async function requireAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error("Ikke innlogget");
     return session;
   }
 
+  // LAST DATA
   async function loadMyOlsmakinger() {
     const session = await requireAuth();
-
-    const { data, error } = await supabase
-            .from("tastings")
-            .select("id, title, total_beers, revealed, created_at")
-            .eq("created_by", session.user.id)
-            .order("created_at", { ascending: false });
-
+    const { data, error } = await supabase.from("tastings").select("*").eq("created_by", session.user.id).order("created_at", { ascending: false });
     if (error) throw error;
-
-    olsSelect.innerHTML =
-            `<option value="">Velg…</option>` +
-            (data ?? []).map(o => `<option value="${o.id}">${o.title} (N=${o.total_beers})</option>`).join("");
+    olsSelect.innerHTML = `<option value="">Velg en ølsmaking...</option>` +
+            data.map(o => `<option value="${o.id}">${o.title} (${o.total_beers} øl)</option>`).join("");
   }
 
   async function loadOlsMeta(id) {
-    const { data, error } = await supabase
-            .from("tastings")
-            .select("title, total_beers, revealed, join_code, current_beer_no")
-            .eq("id", id)
-            .single();
-
-    currentBeerText.textContent = `Øl #${data.current_beer_no} / ${data.total_beers}`;
-
+    const { data, error } = await supabase.from("tastings").select("*").eq("id", id).single();
     if (error) throw error;
-
+    currentOlsId = id;
+    currentBeerNo = data.current_beer_no || 1;
     titleEl.value = data.title;
     totalBeersEl.value = data.total_beers;
-    document.querySelector("#joinCodeText").textContent = data.join_code ?? "—";
-    revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
-    olsStatus.textContent = `Valgt: ${data.title}`;
+    currentBeerText.textContent = `Øl #${currentBeerNo} / ${data.total_beers}`;
+    document.querySelector("#joinCodeText").textContent = data.join_code || "—";
+    revealPill.textContent = data.revealed ? "Status: REVEALED ✅" : "Status: SKJULT 🔒";
+    revealPill.className = data.revealed ? "pill success" : "pill";
+    updateVoterProgress();
   }
 
-  async function setCurrentBeer(newNo) {
+  // SE HVEM SOM HAR STEMT
+  async function updateVoterProgress() {
     if (!currentOlsId) return;
-
-    const n = clampInt(totalBeersEl.value, 1, 200);
-    if (n === null) return alert("Sett N først (1–200)");
-
-    if (newNo < 1) newNo = 1;
-    if (newNo > n) newNo = n;
-
-    const { error } = await supabase
-            .from("tastings")
-            .update({ current_beer_no: newNo })
-            .eq("id", currentOlsId);
-
-    if (error) return alert(error.message);
-
-    await loadOlsMeta(currentOlsId);
+    const { data } = await supabase.from("ratings").select("display_name").eq("tasting_id", currentOlsId).eq("beer_no", currentBeerNo);
+    if (!data || data.length === 0) {
+      voterList.innerHTML = `<span class="muted">Ingen stemmer ennå...</span>`;
+    } else {
+      voterList.innerHTML = data.map(v => `<span class="pill success">${v.display_name} ✅</span>`).join("");
+    }
   }
 
-  document.querySelector("#nextBeer").addEventListener("click", async () => {
-    try {
-      await requireAuth();
-      if (!currentOlsId) return alert("Velg ølsmaking først");
+  // NAVIGATION
+  async function changeBeer(delta) {
+    if (!currentOlsId) return alert("Velg en ølsmaking først");
+    let nextNo = currentBeerNo + delta;
+    if (nextNo < 1) nextNo = 1;
+    const { error } = await supabase.from("tastings").update({ current_beer_no: nextNo }).eq("id", currentOlsId);
+    if (error) alert(error.message);
+    else loadOlsMeta(currentOlsId);
+  }
 
-      const { data, error } = await supabase
-              .from("tastings")
-              .select("current_beer_no")
-              .eq("id", currentOlsId)
-              .single();
-      if (error) throw error;
+  document.querySelector("#nextBeer").onclick = () => changeBeer(1);
+  document.querySelector("#prevBeer").onclick = () => changeBeer(-1);
 
-      await setCurrentBeer((data.current_beer_no ?? 1) + 1);
-    } catch (e) { alert(e.message); }
-  });
+  // LOGIN / LOGOUT
+  document.querySelector("#login").onclick = async () => {
+    const email = document.querySelector("#email").value.trim();
+    const pass = document.querySelector("#pass").value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) alert(error.message); else location.reload();
+  };
 
-  document.querySelector("#prevBeer").addEventListener("click", async () => {
-    try {
-      await requireAuth();
-      if (!currentOlsId) return alert("Velg ølsmaking først");
+  document.querySelector("#logout").onclick = async () => { await supabase.auth.signOut(); location.reload(); };
 
-      const { data, error } = await supabase
-              .from("tastings")
-              .select("current_beer_no")
-              .eq("id", currentOlsId)
-              .single();
-      if (error) throw error;
+  // EVENTS
+  olsSelect.onchange = () => { if(olsSelect.value) { loadOlsMeta(olsSelect.value); refreshBeers(); } };
 
-      await setCurrentBeer((data.current_beer_no ?? 1) - 1);
-    } catch (e) { alert(e.message); }
-  });
-
+  document.querySelector("#saveMeta").onclick = async () => {
+    const { error } = await supabase.from("tastings").update({ title: titleEl.value, total_beers: totalBeersEl.value }).eq("id", currentOlsId);
+    if (error) alert(error.message); else olsStatus.textContent = "Lagret! ✅";
+  };
 
   async function refreshBeers() {
-    const { data, error } = await supabase
-            .from("beers")
-            .select("beer_no, name")
-            .eq("tasting_id", currentOlsId)
-            .order("beer_no");
-
-    if (error) throw error;
-
-    beerRows.innerHTML = "";
-    for (const b of data ?? []) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${b.beer_no}</td><td>${b.name}</td>`;
-      beerRows.appendChild(tr);
-    }
+    const { data } = await supabase.from("beers").select("*").eq("tasting_id", currentOlsId).order("beer_no");
+    beerRows.innerHTML = data.map(b => `<tr><td>${b.beer_no}</td><td>${b.name}</td></tr>`).join("");
   }
 
-  document.querySelector("#login").addEventListener("click", async () => {
-    try {
-      loginStatus.textContent = "Logger inn…";
-      const email = document.querySelector("#email").value.trim();
-      const pass = document.querySelector("#pass").value;
+  document.querySelector("#saveBeer").onclick = async () => {
+    const no = document.querySelector("#beerNo").value;
+    const name = document.querySelector("#beerName").value;
+    const { error } = await supabase.from("beers").upsert({ tasting_id: currentOlsId, beer_no: no, name: name }, { onConflict: "tasting_id,beer_no" });
+    if (error) alert(error.message); else { document.querySelector("#beerName").value = ""; refreshBeers(); }
+  };
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (error) throw error;
-
-      showAdmin();
-      await loadMyOlsmakinger();
-      olsStatus.textContent = "Velg eller opprett ølsmaking.";
-    } catch (e) {
-      alert(e.message);
-      loginStatus.textContent = "Feil ved innlogging";
+  document.querySelector("#reveal").onclick = async () => {
+    if (confirm("Er du sikker? Dette vil vise alle navnene på ølene til deltakerne!")) {
+      await supabase.from("tastings").update({ revealed: true }).eq("id", currentOlsId);
+      loadOlsMeta(currentOlsId);
     }
-  });
+  };
 
-  document.querySelector("#logout").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    showLogin();
-  });
+  document.querySelector("#copyJoin").onclick = () => {
+    navigator.clipboard.writeText(document.querySelector("#joinCodeText").textContent);
+    alert("Kopiert!");
+  };
 
-  olsSelect.addEventListener("change", async () => {
-    currentOlsId = olsSelect.value || null;
-    if (!currentOlsId) return;
-    await loadOlsMeta(currentOlsId);
-    await refreshBeers();
-  });
+  // Polling for å se stemmer i sanntid
+  setInterval(updateVoterProgress, 5000);
 
-  const currentBeerText = document.querySelector("#currentBeerText");
-
-  document.querySelector("#createOls").addEventListener("click", async () => {
-    const title = (titleEl.value || "Juleøl-test").trim();
-    const n = clampInt(totalBeersEl.value, 1, 200);
-    if (n === null) return alert("N må være 1–200");
-
-    const { data, error } = await supabase
-            .from("tastings")
-            .insert({ title, total_beers: n, revealed: false })
-            .select("id")
-            .single();
-
-    if (error) return alert(error.message);
-
-    await loadMyOlsmakinger();
-    olsSelect.value = data.id;
-    currentOlsId = data.id;
-    await loadOlsMeta(data.id);
-    await refreshBeers();
-  });
-
-  document.querySelector("#saveMeta").addEventListener("click", async () => {
-    if (!currentOlsId) return alert("Velg ølsmaking");
-
-    const title = titleEl.value.trim();
-    const n = clampInt(totalBeersEl.value, 1, 200);
-    if (n === null) return alert("N må være 1–200");
-
-    const { error } = await supabase
-            .from("tastings")
-            .update({ title, total_beers: n })
-            .eq("id", currentOlsId);
-
-    if (error) return alert(error.message);
-    await loadMyOlsmakinger();
-    await loadOlsMeta(currentOlsId);
-    olsStatus.textContent = "Oppdatert ✅";
-  });
-
-  document.querySelector("#saveBeer").addEventListener("click", async () => {
-    if (!currentOlsId) return alert("Velg ølsmaking");
-
-    const beerNo = clampInt(document.querySelector("#beerNo").value, 1, 9999);
-    const beerName = document.querySelector("#beerName").value.trim();
-    if (beerNo === null || !beerName) return alert("Ugyldig input");
-
-    const { error } = await supabase
-            .from("beers")
-            .upsert({ tasting_id: currentOlsId, beer_no: beerNo, name: beerName },
-                    { onConflict: "tasting_id,beer_no" });
-
-    if (error) return alert(error.message);
-
-    document.querySelector("#beerName").value = "";
-    await refreshBeers();
-  });
-
-  document.querySelector("#reveal").addEventListener("click", async () => {
-    if (!currentOlsId) return alert("Velg ølsmaking");
-    if (!confirm("Reveal nå?")) return;
-
-    const { error } = await supabase
-            .from("tastings")
-            .update({ revealed: true })
-            .eq("id", currentOlsId);
-
-    if (error) return alert(error.message);
-
-    await loadOlsMeta(currentOlsId);
-  });
-
-  document.querySelector("#copyJoin").addEventListener("click", async () => {
-    const code = document.querySelector("#joinCodeText").textContent.trim();
-    if (!code || code === "—") return alert("Ingen join-kode å kopiere");
-    await navigator.clipboard.writeText(code);
-    alert("Join-kode kopiert ✅");
-  });
-
-  // Regenerer: sett join_code = null -> trigger lager ny (hvis du har set_join_code())
-  document.querySelector("#regenJoin").addEventListener("click", async () => {
-    try {
-      await requireAuth();
-      if (!currentOlsId) return alert("Velg ølsmaking først");
-      if (!confirm("Generere ny join-kode? Den gamle slutter å fungere.")) return;
-
-      const { error } = await supabase
-              .from("tastings")
-              .update({ join_code: null })
-              .eq("id", currentOlsId);
-
-      if (error) throw error;
-
-      // trigges ikke alltid på UPDATE hvis trigger kun er BEFORE INSERT.
-      // Derfor: hvis du kun har BEFORE INSERT, må du i stedet ha en UPDATE-trigger eller en RPC.
-      // Hvis du har fixpakken min som kun lager på INSERT, gi meg beskjed, så gir jeg deg riktig update-trigger.
-      await loadOlsMeta(currentOlsId);
-      alert("Ny join-kode ✅");
-    } catch (e) {
-      alert(e.message);
-    }
-  });
-
-
-  // Init
+  // INIT
   (async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      showAdmin();
-      await loadMyOlsmakinger();
-    } else {
-      showLogin();
+    if (session) {
+      adminApp.style.display = "block";
+      loginCard.style.display = "none";
+      loadMyOlsmakinger();
     }
   })();
 </script>
