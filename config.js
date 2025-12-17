@@ -1,0 +1,3 @@
+// config.js
+export const SUPABASE_URL = "https://lgwgsbdqsrfjmbcqomns.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnd2dzYmRxc3Jmam1iY3FvbW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MDMyMTEsImV4cCI6MjA4MTQ3OTIxMX0.nIGnmGVcgN_A4Vw-uDxszOzgoCAhAcS2WLR0VFERKts";

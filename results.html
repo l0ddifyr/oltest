@@ -11,15 +11,12 @@
     label{display:block;font-weight:600;margin-top:10px}
     .muted{color:#666;font-size:13px}
     .row{display:flex;gap:10px;flex-wrap:wrap}
-    .row>*{flex:1;min-width:140px}
+    .row>*{flex:1;min-width:160px}
     table{width:100%;border-collapse:collapse;margin-top:10px}
     th,td{border-bottom:1px solid #eee;padding:8px 6px;text-align:left;vertical-align:top}
     .right{text-align:right}
     .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
-    .danger{border-color:#f0caca}
-    .ok{border-color:#cfe8cf}
-    details summary{cursor:pointer; font-weight:600}
-    code{font-size:12px}
+    details summary{cursor:pointer;font-weight:600}
   </style>
 </head>
 <body>
@@ -40,16 +37,13 @@
 
 <div class="card">
   <h2>Velg tasting</h2>
-  <label>Tasting ID (UUID)</label>
-  <input id="tastingId" placeholder="Lim inn tasting UUID" />
+  <select id="tastingSelect">
+    <option value="">Logg inn først…</option>
+  </select>
   <div class="row" style="margin-top:10px">
     <button id="load">Last resultater</button>
-    <button id="copyLink" type="button">Kopier “deltakerlink”</button>
   </div>
   <div class="muted" id="loadStatus">—</div>
-  <div class="muted">
-    “Deltakerlink” er bare en hjelpetekst for deg (index.html med samme TASTING_ID). Denne siden viser navn/poeng og bør være admin-only.
-  </div>
 </div>
 
 <div id="content" style="display:none">
@@ -57,7 +51,7 @@
     <h2>Status</h2>
     <div class="row">
       <div><span class="pill" id="revealPill">—</span></div>
-      <div class="muted">Ølnavn kommer fra <code>beers_public</code> (null før reveal).</div>
+      <div class="muted" id="metaText">—</div>
     </div>
   </div>
 
@@ -66,7 +60,7 @@
     <table>
       <thead>
       <tr>
-        <th>Øl</th>
+        <th>Øl #</th>
         <th>Navn</th>
         <th class="right">Snitt</th>
         <th class="right">#</th>
@@ -84,15 +78,11 @@
     <div class="row">
       <div>
         <label>Filter: Øl</label>
-        <select id="filterBeer">
-          <option value="">Alle</option>
-        </select>
+        <select id="filterBeer"><option value="">Alle</option></select>
       </div>
       <div>
         <label>Filter: Person</label>
-        <select id="filterPerson">
-          <option value="">Alle</option>
-        </select>
+        <select id="filterPerson"><option value="">Alle</option></select>
       </div>
       <div>
         <label>Sorter</label>
@@ -110,7 +100,7 @@
     <table>
       <thead>
       <tr>
-        <th>Øl</th>
+        <th>Øl #</th>
         <th>Navn</th>
         <th>Person</th>
         <th class="right">Total</th>
@@ -126,7 +116,6 @@
 
     <details style="margin-top:12px">
       <summary>Eksporter CSV (kopier)</summary>
-      <p class="muted">Klikk knappen og lim inn i Excel/Google Sheets.</p>
       <button id="copyCsv" type="button">Kopier CSV</button>
       <pre id="csvOut" style="white-space:pre-wrap; word-break:break-word; border:1px solid #eee; padding:10px; border-radius:10px; margin-top:10px;"></pre>
     </details>
@@ -135,15 +124,18 @@
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-  const SUPABASE_URL = "https://lgwgsbdqsrfjmbcqomns.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnd2dzYmRxc3Jmam1iY3FvbW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MDMyMTEsImV4cCI6MjA4MTQ3OTIxMX0.nIGnmGVcgN_A4Vw-uDxszOzgoCAhAcS2WLR0VFERKts";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const authStatus = document.querySelector("#authStatus");
   const loadStatus = document.querySelector("#loadStatus");
+
+  const tastingSelect = document.querySelector("#tastingSelect");
+
   const content = document.querySelector("#content");
+  const revealPill = document.querySelector("#revealPill");
+  const metaText = document.querySelector("#metaText");
 
   const rankingRows = document.querySelector("#rankingRows");
   const votesRows = document.querySelector("#votesRows");
@@ -152,88 +144,55 @@
   const filterPerson = document.querySelector("#filterPerson");
   const sortBy = document.querySelector("#sortBy");
 
-  const revealPill = document.querySelector("#revealPill");
-
   const csvOut = document.querySelector("#csvOut");
 
-  let beersMap = new Map();   // beer_no -> name|null
-  let votes = [];            // ratings rows
-  let ranking = [];          // aggregated per beer
+  let beersMap = new Map(); // beer_no -> name|null (fra beers_public)
+  let votes = [];
+  let ranking = [];
 
   function fmtTime(iso) {
     if (!iso) return "";
-    const d = new Date(iso);
-    return d.toLocaleString();
-  }
-
-  function safe(s) {
-    return (s ?? "").toString();
+    return new Date(iso).toLocaleString();
   }
 
   function csvEscape(v) {
-    const s = safe(v);
-    if (s.includes(",") || s.includes("\"") || s.includes("\n")) {
-      return `"${s.replaceAll("\"","\"\"")}"`;
-    }
+    const s = (v ?? "").toString();
+    if (s.includes(",") || s.includes("\"") || s.includes("\n")) return `"${s.replaceAll("\"","\"\"")}"`;
     return s;
-  }
-
-  async function refreshAuthStatus() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      authStatus.textContent = "Innlogget ✅";
-    } else {
-      authStatus.textContent = "Ikke innlogget";
-    }
-    return session;
   }
 
   async function requireAuth() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error("Du må logge inn som admin for å se resultater.");
+    if (!session?.user) throw new Error("Du må logge inn som admin.");
     return session;
   }
 
-  document.querySelector("#login").addEventListener("click", async () => {
-    try {
-      const email = document.querySelector("#email").value.trim();
-      const pass = document.querySelector("#pass").value;
-      authStatus.textContent = "Logger inn…";
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (error) throw error;
-      await refreshAuthStatus();
-    } catch (e) {
-      console.error(e);
-      alert(e.message);
-      authStatus.textContent = "Feil";
-    }
-  });
+  async function loadMyTastings() {
+    const { data: { session } } = await supabase.auth.getSession();
 
-  document.querySelector("#logout").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    await refreshAuthStatus();
-    content.style.display = "none";
-  });
-
-  document.querySelector("#copyLink").addEventListener("click", async () => {
-    const id = document.querySelector("#tastingId").value.trim();
-    if (!id) return alert("Lim inn tasting ID først");
-    const hint = `Husk å sette TASTING_ID = "${id}" i index.html før du deler deltakerlinken.`;
-    await navigator.clipboard.writeText(hint);
-    alert("Kopiert ✅");
-  });
-
-  async function loadTastingMeta(tastingId) {
     const { data, error } = await supabase
             .from("tastings")
-            .select("id, revealed, title")
-            .eq("id", tastingId)
-            .single();
+            .select("id, title, total_beers, created_at, created_by")
+            .eq("created_by", session.user.id)
+            .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    revealPill.textContent = data.revealed ? "REVEALED ✅ (ølnavn synlig)" : "SKJULT 🔒 (ølnavn = null)";
-    revealPill.className = "pill " + (data.revealed ? "ok" : "danger");
+    tastingSelect.innerHTML =
+            `<option value="">Velg…</option>` +
+            (data ?? []).map(t => `<option value="${t.id}">${t.title} (N=${t.total_beers || 0})</option>`).join("");
+  }
+
+  async function loadMeta(tastingId) {
+    const { data, error } = await supabase
+            .from("tastings")
+            .select("title, total_beers, revealed")
+            .eq("id", tastingId)
+            .single();
+    if (error) throw error;
+
+    metaText.textContent = `${data.title} — N=${data.total_beers}`;
+    revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
   }
 
   async function loadBeersPublic(tastingId) {
@@ -244,12 +203,10 @@
             .order("beer_no", { ascending: true });
 
     if (error) throw error;
-
-    beersMap = new Map(data.map(x => [x.beer_no, x.name])); // name kan være null før reveal
+    beersMap = new Map((data ?? []).map(x => [x.beer_no, x.name])); // name null før reveal
   }
 
   async function loadAllVotes(tastingId) {
-    // NB: Dette krever at du er admin (policy ratings_admin_select_all_in_own_tasting)
     const { data, error } = await supabase
             .from("ratings")
             .select("beer_no, score, smak, ettersmak, farge, lukt, display_name, updated_at, created_at")
@@ -257,38 +214,32 @@
 
     if (error) throw error;
 
-    votes = data.map(v => ({
-      ...v,
-      time: v.updated_at ?? v.created_at
-    }));
+    votes = (data ?? []).map(v => ({ ...v, time: v.updated_at ?? v.created_at }));
   }
 
   function buildRanking() {
-    const byBeer = new Map(); // beer_no -> {sum, count, min, max}
+    const byBeer = new Map();
     for (const v of votes) {
-      const key = v.beer_no;
-      if (!byBeer.has(key)) byBeer.set(key, { beer_no: key, sum: 0, count: 0, min: Infinity, max: -Infinity });
-      const agg = byBeer.get(key);
-      agg.sum += Number(v.score);
-      agg.count += 1;
-      agg.min = Math.min(agg.min, Number(v.score));
-      agg.max = Math.max(agg.max, Number(v.score));
+      if (!byBeer.has(v.beer_no)) byBeer.set(v.beer_no, { beer_no: v.beer_no, sum:0, count:0, min:Infinity, max:-Infinity });
+      const a = byBeer.get(v.beer_no);
+      a.sum += Number(v.score);
+      a.count++;
+      a.min = Math.min(a.min, Number(v.score));
+      a.max = Math.max(a.max, Number(v.score));
     }
     ranking = [...byBeer.values()].map(r => ({
       beer_no: r.beer_no,
       avg: r.count ? r.sum / r.count : 0,
       count: r.count,
-      min: r.min === Infinity ? null : r.min,
-      max: r.max === -Infinity ? null : r.max
+      min: isFinite(r.min) ? r.min : null,
+      max: isFinite(r.max) ? r.max : null
     })).sort((a,b) => b.avg - a.avg);
   }
 
   function populateFilters() {
-    // Øl-filter
     const beerNos = [...new Set(votes.map(v => v.beer_no))].sort((a,b) => a-b);
     filterBeer.innerHTML = `<option value="">Alle</option>` + beerNos.map(n => `<option value="${n}">${n}</option>`).join("");
 
-    // Person-filter
     const people = [...new Set(votes.map(v => v.display_name))].sort((a,b) => a.localeCompare(b));
     filterPerson.innerHTML = `<option value="">Alle</option>` + people.map(p => `<option value="${encodeURIComponent(p)}">${p}</option>`).join("");
   }
@@ -300,7 +251,7 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
           <td>${r.beer_no}</td>
-          <td>${name ? safe(name) : "<span class='muted'>(skjult)</span>"}</td>
+          <td>${name ? name : "<span class='muted'>(skjult)</span>"}</td>
           <td class="right">${r.avg.toFixed(2)}</td>
           <td class="right">${r.count}</td>
           <td class="right">${r.max ?? ""}</td>
@@ -313,113 +264,13 @@
   function getFilteredVotes() {
     let out = [...votes];
 
-    const beerVal = filterBeer.value;
-    if (beerVal) out = out.filter(v => String(v.beer_no) === String(beerVal));
+    const b = filterBeer.value;
+    if (b) out = out.filter(v => String(v.beer_no) === String(b));
 
-    const personVal = filterPerson.value;
-    if (personVal) {
-      const decoded = decodeURIComponent(personVal);
-      out = out.filter(v => v.display_name === decoded);
-    }
+    const p = filterPerson.value;
+    if (p) out = out.filter(v => v.display_name === decodeURIComponent(p));
 
-    const sortVal = sortBy.value;
-    if (sortVal === "beer_no") out.sort((a,b) => a.beer_no - b.beer_no);
-    if (sortVal === "name") out.sort((a,b) => a.display_name.localeCompare(b.display_name));
-    if (sortVal === "score_desc") out.sort((a,b) => b.score - a.score);
-    if (sortVal === "score_asc") out.sort((a,b) => a.score - b.score);
-    if (sortVal === "time_desc") out.sort((a,b) => new Date(b.time) - new Date(a.time));
-    if (sortVal === "time_asc") out.sort((a,b) => new Date(a.time) - new Date(b.time));
-
-    return out;
-  }
-
-  function renderVotes() {
-    const list = getFilteredVotes();
-    votesRows.innerHTML = "";
-
-    for (const v of list) {
-      const beerName = beersMap.get(v.beer_no) ?? null;
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-          <td>${v.beer_no}</td>
-          <td>${beerName ? safe(beerName) : "<span class='muted'>(skjult)</span>"}</td>
-          <td>${safe(v.display_name)}</td>
-          <td class="right"><b>${v.score}</b></td>
-          <td class="right">${v.smak}</td>
-          <td class="right">${v.ettersmak}</td>
-          <td class="right">${v.farge}</td>
-          <td class="right">${v.lukt}</td>
-          <td class="right">${fmtTime(v.time)}</td>
-        `;
-      votesRows.appendChild(tr);
-    }
-
-    buildCsv(list);
-  }
-
-  function buildCsv(list) {
-    const header = ["beer_no","beer_name","person","score","smak","ettersmak","farge","lukt","time"];
-    const lines = [header.join(",")];
-
-    for (const v of list) {
-      const beerName = beersMap.get(v.beer_no) ?? "";
-      const row = [
-        v.beer_no,
-        beerName,
-        v.display_name,
-        v.score,
-        v.smak,
-        v.ettersmak,
-        v.farge,
-        v.lukt,
-        fmtTime(v.time)
-      ].map(csvEscape);
-
-      lines.push(row.join(","));
-    }
-
-    csvOut.textContent = lines.join("\n");
-  }
-
-  document.querySelector("#copyCsv").addEventListener("click", async () => {
-    const txt = csvOut.textContent || "";
-    if (!txt) return alert("Ingen CSV å kopiere");
-    await navigator.clipboard.writeText(txt);
-    alert("CSV kopiert ✅");
-  });
-
-  [filterBeer, filterPerson, sortBy].forEach(el => el.addEventListener("change", renderVotes));
-
-  document.querySelector("#load").addEventListener("click", async () => {
-    try {
-      await requireAuth();
-
-      const tastingId = document.querySelector("#tastingId").value.trim();
-      if (!tastingId) return alert("Lim inn tasting ID");
-
-      loadStatus.textContent = "Laster…";
-
-      await loadTastingMeta(tastingId);
-      await loadBeersPublic(tastingId);
-      await loadAllVotes(tastingId);
-
-      buildRanking();
-      populateFilters();
-      renderRanking();
-      renderVotes();
-
-      content.style.display = "block";
-      loadStatus.textContent = `Lastet ✅ (${votes.length} stemmer)`;
-    } catch (e) {
-      console.error(e);
-      alert(e.message);
-      loadStatus.textContent = "Feil";
-    }
-  });
-
-  // initial
-  refreshAuthStatus();
-</script>
-</body>
-</html>
+    switch (sortBy.value) {
+      case "beer_no": out.sort((a,b) => a.beer_no - b.beer_no); break;
+      case "name": out.sort((a,b) => a.display_name.localeCompare(b.display_name)); break;
+      case
