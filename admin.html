@@ -268,7 +268,8 @@
 
     const { error } = await supabase
             .from("beers")
-            .upsert({ tasting_id: currentOlsId, beer_no: beerNo, name: beerName });
+            .upsert({ tasting_id: currentOlsId, beer_no: beerNo, name: beerName },
+                    { onConflict: "tasting_id,beer_no" });
 
     if (error) return alert(error.message);
 
