@@ -2,154 +2,88 @@
 <html lang="no">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
     <title>Juleøl-test 🍻</title>
     <style>
-        /* Mobil-først design */
+        :root {
+            --primary: #d4a017;
+            --secondary: #800000;
+            --success: #2e7d32;
+            --bg: #fcfcfc;
+        }
+
         body {
             font-family: system-ui, -apple-system, sans-serif;
             margin: 0;
-            padding: 16px;
-            background-color: #fcfcfc;
+            padding: 12px;
+            background-color: var(--bg);
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        h1 { text-align: center; color: #800000; margin-bottom: 24px; }
+        h1 { text-align: center; color: var(--secondary); margin: 20px 0; font-size: 28px; }
 
         .card {
             background: white;
             border: 1px solid #ddd;
             border-radius: 20px;
-            padding: 24px;
+            padding: 20px;
             margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
 
-        /* Store, fete labels */
-        label {
-            display: block;
-            font-weight: 700;
-            margin-bottom: 8px;
-            font-size: 14px;
-            text-transform: uppercase;
-            color: #666;
+        /* Inputfelt og knapper */
+        label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; color: #666; }
+
+        input#joinCode, input#name {
+            width: 100%; height: 65px; border-radius: 15px; border: 2px solid #eee;
+            font-size: 20px; font-weight: 600; box-sizing: border-box; margin-bottom: 20px;
+            background: #f9f9f9; text-align: center;
         }
 
-        /* Massive input-felt for fingre */
-        input[type=text],
-        input[type=number],
-        input#joinCode,
-        input#name {
-            width: 100%;
-            height: 60px; /* Ekstra høyde for touch */
-            padding: 0 20px;
-            border-radius: 15px;
-            border: 2px solid #eee;
-            font-size: 20px; /* Hindrer auto-zoom på iPhone */
-            font-weight: 600;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            background: #f9f9f9;
-            transition: border-color 0.2s;
+        input#joinCode { letter-spacing: 8px; font-size: 28px; text-transform: uppercase; }
+
+        /* Slidere som fyller hele bredden */
+        .score-row { width: 100%; margin-bottom: 28px; }
+        .score-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .score-val {
+            font-size: 24px; font-weight: 900; color: var(--primary);
+            background: #fff9eb; padding: 4px 14px; border-radius: 10px; border: 1px solid #ffeeba;
         }
 
-        input:focus {
-            border-color: #d4a017;
-            background: #fff;
-            outline: none;
-        }
-
-        /* Sentrert join-kode med store bokstaver */
-        #joinCode {
-            text-align: center;
-            letter-spacing: 8px;
-            text-transform: uppercase;
-            font-size: 28px;
-        }
-
-        /* Stor, tydelig knapp */
-        button#start {
-            width: 100%;
-            height: 65px;
-            background: #d4a017;
-            color: white;
-            border: none;
-            border-radius: 15px;
-            font-size: 20px;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #b88a14; /* 3D-effekt som føles klikkbar */
-        }
-
-        button#start:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #b88a14;
-        }
-        button#reset { background: #f8f9fa; color: #666; border: 1px solid #ddd; margin-top: 20px; }
-
-        /* Containeren som holder hver slider */
-        .score-row {
-            margin-bottom: 25px;
-            width: 100%; /* Sikrer full bredde */
-        }
-
-        .score-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 0 4px; /* Litt luft på sidene av teksten */
-        }
-
-        /* Selve slider-linja */
         input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 15px; /* Litt tykkere linje for bedre treffpunkt */
-            border-radius: 10px;
-            background: #eee;
-            outline: none;
-            margin: 0;
-            display: block;
+            -webkit-appearance: none; width: 100%; height: 18px; border-radius: 10px;
+            background: #eee; outline: none; margin: 0; touch-action: none;
         }
 
-        /* Selve "håndtaket" (prikken man drar i) */
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 32px;  /* Større håndtak for tommel */
-            height: 32px;
-            background: #d4a017;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            -webkit-appearance: none; width: 36px; height: 36px; background: var(--primary);
+            border-radius: 50%; border: 4px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.2);
         }
 
-        /* For Firefox */
-        input[type=range]::-moz-range-thumb {
-            width: 32px;
-            height: 32px;
-            background: #d4a017;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        /* Store, fete knapper */
+        .btn-large {
+            width: 100%; height: 70px; border-radius: 18px; border: none;
+            font-size: 22px; font-weight: 800; color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s; margin-top: 10px;
         }
 
-        /* Gjør kortet litt mer kompakt på mobil så slideren får plass */
-        @media (max-width: 480px) {
-            .card {
-                padding: 16px 12px; /* Mindre padding på sidene inne i kortet */
-                margin: 10px 0;
-            }
+        .btn-large:active { transform: scale(0.97); }
+
+        #start { background: var(--primary); box-shadow: 0 5px 0 #b88a14; }
+        #save { background: var(--success); box-shadow: 0 5px 0 #1e5622; margin-top: 20px; }
+        #reset { background: #f1f1f1; color: #666; font-size: 16px; height: 50px; margin-top: 30px; box-shadow: none; border: 1px solid #ddd; }
+
+        .beer-info-box {
+            background: #fff5f5; border: 2px solid #feb2b2; border-radius: 15px;
+            padding: 15px; text-align: center; margin-bottom: 20px;
         }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
-        .right { text-align: right; }
-        .muted { color: #666; font-size: 13px; text-align: center; }
-        .pill { display: inline-block; padding: 4px 12px; background: #e8f5e9; color: #2e7d32; border-radius: 999px; font-size: 12px; font-weight: bold; }
-        #status { font-weight: bold; text-align: center; color: #2e7d32; min-height: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
+        td { padding: 12px 5px; border-bottom: 1px solid #eee; }
+        .muted { color: #666; font-size: 14px; text-align: center; margin-top: 10px; }
+        .pill { padding: 5px 12px; background: #e8f5e9; color: #2e7d32; border-radius: 999px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -157,79 +91,61 @@
 <h1>Juleøl-test 🍻</h1>
 
 <div id="screenSetup" class="card">
-    <h2 style="margin-top:0; text-align:center;">Bli med på test</h2>
-
     <label for="joinCode">Join-kode</label>
-    <input
-            id="joinCode"
-            placeholder="KODE"
-            maxlength="4"
-            autocapitalize="characters"
-            autocorrect="off"
-            autocomplete="off"
-            inputmode="text"
-    />
+    <input id="joinCode" placeholder="KODE" maxlength="4" autotype="text" />
 
     <label for="name">Ditt Navn</label>
-    <input
-            id="name"
-            placeholder="F.eks. Ola"
-            autocomplete="name"
-            autocorrect="off"
-    />
+    <input id="name" placeholder="Skriv her..." autocomplete="name" />
 
-    <button id="start">START SMAKING 🍻</button>
-    <div class="muted" id="setupStatus" style="margin-top:20px; text-align:center;">—</div>
+    <button id="start" class="btn-large">START SMAKING 🚀</button>
+    <div class="muted" id="setupStatus">—</div>
 </div>
 
 <div id="screenRate" class="card" style="display:none">
-    <div style="display:flex; justify-content: space-between; align-items: center;">
-        <div>
-            <div class="muted" style="text-align:left">Test: <b id="olsTitle">—</b></div>
-            <div class="muted" style="text-align:left">Smaker: <b id="who">—</b></div>
-        </div>
-        <span class="pill" id="livePill">Kobler til...</span>
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <span class="pill" id="livePill">Kobler...</span>
+        <div class="muted" style="text-align:right"><b><span id="who">—</span></b> @ <span id="olsTitle">—</span></div>
     </div>
 
-    <div class="card" style="background: #fff5f5; border-color: #feb2b2; text-align: center;">
-        <div class="muted" id="beerHelp">Nå smaker vi:</div>
-        <div style="font-size:32px; font-weight:900; color: #c53030;" id="currentBeerLabel">Øl #—</div>
+    <div class="beer-info-box">
+        <div class="muted">Nå smaker vi:</div>
+        <div style="font-size:36px; font-weight:900; color: var(--secondary);" id="currentBeerLabel">Øl #1</div>
+        <div id="beerHelp" class="muted">Øl 1 av ?</div>
     </div>
 
     <div class="score-row">
-        <div class="score-header"><label>Smak</label><div class="score-val" id="val-smak">0</div></div>
+        <div class="score-header"><label>Smak (0-50)</label><div class="score-val" id="val-smak">0</div></div>
         <input type="range" id="smak" min="0" max="50" value="0">
     </div>
 
     <div class="score-row">
-        <div class="score-header"><label>Ettersmak</label><div class="score-val" id="val-ettersmak">0</div></div>
+        <div class="score-header"><label>Ettersmak (0-20)</label><div class="score-val" id="val-ettersmak">0</div></div>
         <input type="range" id="ettersmak" min="0" max="20" value="0">
     </div>
 
     <div class="score-row">
-        <div class="score-header"><label>Farge / Utseende</label><div class="score-val" id="val-farge">0</div></div>
+        <div class="score-header"><label>Farge (0-20)</label><div class="score-val" id="val-farge">0</div></div>
         <input type="range" id="farge" min="0" max="20" value="0">
     </div>
 
     <div class="score-row">
-        <div class="score-header"><label>Lukt</label><div class="score-val" id="val-lukt">0</div></div>
+        <div class="score-header"><label>Lukt (0-10)</label><div class="score-val" id="val-lukt">0</div></div>
         <input type="range" id="lukt" min="0" max="10" value="0">
     </div>
 
-    <div style="font-size:24px; font-weight:800; text-align: center; margin: 20px 0;" id="totalPreview">Total: 0 / 100</div>
+    <div style="font-size:28px; font-weight:900; text-align: center; margin: 25px 0; color: var(--secondary);" id="totalPreview">0 / 100 poeng</div>
 
-    <button id="save">Lagre poeng</button>
-    <div id="status" style="margin-top:10px">—</div>
+    <button id="save" class="btn-large">LAGRE POENG 💾</button>
+    <div id="status" style="text-align:center; margin-top:15px; font-weight:bold; color: var(--success); min-height: 24px;"></div>
 
-    <div class="card" style="padding: 10px;">
-        <h3 style="margin-top:0">Dine stemmer</h3>
+    <div class="card" style="padding: 10px; margin-top:30px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; text-align: center;">Dine registreringer</h3>
         <table>
-            <thead><tr><th>Øl #</th><th class="right">Total</th></tr></thead>
             <tbody id="rows"></tbody>
         </table>
     </div>
 
-    <button id="reset" type="button">Bytt bruker/rom</button>
+    <button id="reset" class="btn-large">Avbryt / Logg ut</button>
 </div>
 
 <script type="module">
@@ -238,161 +154,135 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const LS_STARTED = "juleol_started", LS_NAME = "juleol_name", LS_TASTING = "juleol_ols_id";
-    const setup = document.querySelector("#screenSetup"), rate = document.querySelector("#screenRate");
-    const joinCodeEl = document.querySelector("#joinCode"), nameEl = document.querySelector("#name"), setupStatus = document.querySelector("#setupStatus");
-    const olsTitleEl = document.querySelector("#olsTitle"), whoEl = document.querySelector("#who"), currentBeerLabel = document.querySelector("#currentBeerLabel");
-    const beerHelp = document.querySelector("#beerHelp"), livePill = document.querySelector("#livePill"), totalPreview = document.querySelector("#totalPreview");
-    const smakEl = document.querySelector("#smak"), ettersmakEl = document.querySelector("#ettersmak"), fargeEl = document.querySelector("#farge"), luktEl = document.querySelector("#lukt");
-    const rows = document.querySelector("#rows"), status = document.querySelector("#status");
+    // DOM Elements
+    const sSetup = document.getElementById("screenSetup"), sRate = document.getElementById("screenRate");
+    const smakEl = document.getElementById("smak"), ettersmakEl = document.getElementById("ettersmak"), fargeEl = document.getElementById("farge"), luktEl = document.getElementById("lukt");
+    const totalPreview = document.getElementById("totalPreview"), status = document.getElementById("status");
 
-    let tastingId = null, tastingTitle = "", totalBeers = 0, currentBeerNo = 1, userId = null, channel = null;
+    let tastingId = null, currentBeerNo = 1, userId = null, channel = null;
 
-    // Oppdaterer visuelle tall ved siden av sliderne
-    function updateSliderLabels() {
+    function updateUI() {
         document.getElementById('val-smak').textContent = smakEl.value;
         document.getElementById('val-ettersmak').textContent = ettersmakEl.value;
         document.getElementById('val-farge').textContent = fargeEl.value;
         document.getElementById('val-lukt').textContent = luktEl.value;
+        const total = Number(smakEl.value) + Number(ettersmakEl.value) + Number(fargeEl.value) + Number(luktEl.value);
+        totalPreview.textContent = `${total} / 100 poeng`;
     }
 
-    function calcTotal(){
-        const t = Number(smakEl.value) + Number(ettersmakEl.value) + Number(fargeEl.value) + Number(luktEl.value);
-        totalPreview.textContent = `Total: ${t} / 100`;
-        updateSliderLabels();
-        return t;
-    }
-    [smakEl,ettersmakEl,fargeEl,luktEl].forEach(el => el.addEventListener("input", calcTotal));
+    [smakEl, ettersmakEl, fargeEl, luktEl].forEach(el => el.addEventListener("input", updateUI));
 
     async function ensureSession(){
         const { data:{session} } = await supabase.auth.getSession();
-        if(session?.user){ userId = session.user.id; return; }
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if(error) throw error;
-        userId = data.session.user.id;
-    }
-
-    async function lookupByCode(code){
-        const { data, error } = await supabase.rpc("get_ols_by_join_code", { p_code: code });
-        if(error || !data || data.length === 0) throw new Error("Ugyldig join-kode");
-        return data[0];
-    }
-
-    async function loadOlsMetaById(id){
-        const { data, error } = await supabase.from("tastings").select("title,total_beers,current_beer_no").eq("id", id).single();
-        if(error) throw error;
-        tastingTitle = data.title; totalBeers = data.total_beers; currentBeerNo = data.current_beer_no ?? 1;
-    }
-
-    async function loadMyRatings(){
-        const { data, error } = await supabase.from("ratings").select("beer_no, score").eq("tasting_id", tastingId).eq("user_id", userId).order("beer_no");
-        if(error) throw error;
-        rows.innerHTML = (data||[]).map(r => `<tr><td>Øl #${r.beer_no}</td><td class="right">${r.score} poeng</td></tr>`).join("");
-    }
-
-    async function loadMyRatingForCurrentBeer(){
-        const { data, error } = await supabase.from("ratings").select("smak,ettersmak,farge,lukt").eq("tasting_id", tastingId).eq("user_id", userId).eq("beer_no", currentBeerNo).maybeSingle();
-        if(error) throw error;
-        if(!data){
-            smakEl.value = ettersmakEl.value = fargeEl.value = luktEl.value = 0;
-            status.textContent = "Ny smaking påbegynt...";
-        } else {
-            smakEl.value = data.smak || 0; ettersmakEl.value = data.ettersmak || 0; fargeEl.value = data.farge || 0; luktEl.value = data.lukt || 0;
-            status.textContent = "Du har stemt på denne (kan endres).";
+        if(session) { userId = session.user.id; }
+        else {
+            const { data } = await supabase.auth.signInAnonymously();
+            userId = data.session.user.id;
         }
-        calcTotal();
     }
 
-    function renderCurrentBeer(){
-        currentBeerLabel.textContent = `Øl #${currentBeerNo}`;
-        beerHelp.textContent = totalBeers ? `Øl ${currentBeerNo} av ${totalBeers}` : `Nå smaker vi:`;
+    async function loadMeta(id) {
+        const { data } = await supabase.from("tastings").select("*").eq("id", id).single();
+        document.getElementById("olsTitle").textContent = data.title;
+        currentBeerNo = data.current_beer_no || 1;
+        document.getElementById("currentBeerLabel").textContent = `Øl #${currentBeerNo}`;
+        document.getElementById("beerHelp").textContent = `Øl ${currentBeerNo} av ${data.total_beers}`;
     }
 
-    async function subscribeToCurrentBeer(){
+    async function loadMyRatings() {
+        const { data } = await supabase.from("ratings").select("beer_no, score").eq("tasting_id", tastingId).eq("user_id", userId).order("beer_no", {ascending: false});
+        document.getElementById("rows").innerHTML = data.map(r => `<tr><td>Øl #${r.beer_no}</td><td style="text-align:right"><b>${r.score} poeng</b></td></tr>`).join("");
+    }
+
+    async function loadCurrentRating() {
+        const { data } = await supabase.from("ratings").select("*").eq("tasting_id", tastingId).eq("user_id", userId).eq("beer_no", currentBeerNo).maybeSingle();
+        if(data) {
+            smakEl.value = data.smak; ettersmakEl.value = data.ettersmak; fargeEl.value = data.farge; luktEl.value = data.lukt;
+            status.textContent = "Du har stemt på denne.";
+        } else {
+            smakEl.value = ettersmakEl.value = fargeEl.value = luktEl.value = 0;
+            status.textContent = "";
+        }
+        updateUI();
+    }
+
+    async function subscribe() {
         if(channel) supabase.removeChannel(channel);
-        channel = supabase.channel(`ols-${tastingId}-live`)
+        channel = supabase.channel(`ols-${tastingId}`)
             .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tastings", filter: `id=eq.${tastingId}` }, async (payload) => {
-                const nextNo = payload?.new?.current_beer_no;
-                if(typeof nextNo === "number" && nextNo !== currentBeerNo){
-                    currentBeerNo = nextNo;
-                    renderCurrentBeer();
-                    livePill.textContent = "LIVE ✓";
-                    livePill.style.background = "#e8f5e9";
-                    await loadMyRatingForCurrentBeer();
+                if(payload.new.current_beer_no !== currentBeerNo) {
+                    currentBeerNo = payload.new.current_beer_no;
+                    await loadMeta(tastingId);
+                    await loadCurrentRating();
                 }
             })
-            .subscribe((s) => { livePill.textContent = (s === "SUBSCRIBED") ? "LIVE ✓" : "Kobler..."; });
+            .subscribe((s) => {
+                document.getElementById("livePill").textContent = s === "SUBSCRIBED" ? "LIVE ✓" : "Offline";
+                document.getElementById("livePill").style.background = s === "SUBSCRIBED" ? "#e8f5e9" : "#eee";
+            });
     }
 
-    document.querySelector("#start").addEventListener("click", async ()=>{
-        try{
-            const code = joinCodeEl.value.toUpperCase().replace(/[^A-Z0-9]/g, "").trim();
-            const name = nameEl.value.trim();
-            if (code.length !== 4) return alert("Join-kode må være 4 tegn");
-            if(!name) return alert("Hva heter du?");
+    document.getElementById("start").onclick = async () => {
+        const code = document.getElementById("joinCode").value.toUpperCase().trim();
+        const name = document.getElementById("name").value.trim();
+        if(code.length !== 4 || !name) return alert("Sjekk kode og navn!");
 
-            setupStatus.textContent = "Sjekker tilgang...";
-            const ols = await lookupByCode(code);
-            tastingId = ols.id;
-            localStorage.setItem(LS_STARTED,"1");
-            localStorage.setItem(LS_NAME,name);
-            localStorage.setItem(LS_TASTING,tastingId);
+        document.getElementById("setupStatus").textContent = "Kobler til...";
+        const { data: ols } = await supabase.rpc("get_ols_by_join_code", { p_code: code });
 
-            await loadOlsMetaById(tastingId);
-            olsTitleEl.textContent = tastingTitle;
-            whoEl.textContent = name;
-            renderCurrentBeer();
-            await loadMyRatings();
-            await loadMyRatingForCurrentBeer();
-            await subscribeToCurrentBeer();
+        if(!ols || ols.length === 0) {
+            document.getElementById("setupStatus").textContent = "Ugyldig kode";
+            return;
+        }
 
-            setup.style.display="none";
-            rate.style.display="block";
-        }catch(e){ alert(e.message); setupStatus.textContent="—"; }
-    });
+        tastingId = ols[0].id;
+        localStorage.setItem("j_id", tastingId);
+        localStorage.setItem("j_name", name);
 
-    document.querySelector("#save").addEventListener("click", async ()=>{
-        const total = calcTotal();
-        status.textContent="Lagrer...";
+        document.getElementById("who").textContent = name;
+        await loadMeta(tastingId);
+        await loadMyRatings();
+        await loadCurrentRating();
+        await subscribe();
+
+        sSetup.style.display = "none";
+        sRate.style.display = "block";
+    };
+
+    document.getElementById("save").onclick = async () => {
+        status.textContent = "Lagrer...";
+        const total = Number(smakEl.value) + Number(ettersmakEl.value) + Number(fargeEl.value) + Number(luktEl.value);
         const { error } = await supabase.from("ratings").upsert({
             tasting_id: tastingId, beer_no: currentBeerNo, user_id: userId,
-            display_name: localStorage.getItem(LS_NAME),
-            smak: Number(smakEl.value), ettersmak: Number(ettersmakEl.value),
-            farge: Number(fargeEl.value), lukt: Number(luktEl.value), score: total
+            display_name: localStorage.getItem("j_name"),
+            smak: smakEl.value, ettersmak: ettersmakEl.value, farge: fargeEl.value, lukt: luktEl.value, score: total
         }, { onConflict: "tasting_id,beer_no,user_id" });
 
-        if(error) return alert(error.message);
-        await loadMyRatings();
-        status.textContent="✅ Lagret!";
-        setTimeout(() => { if(status.textContent === "✅ Lagret!") status.textContent = "—"; }, 3000);
-    });
-
-    document.querySelector("#reset").addEventListener("click", ()=>{
-        if(confirm("Vil du virkelig bytte rom/navn?")){
-            localStorage.clear();
-            location.reload();
+        if(!error) {
+            status.textContent = "✅ Lagret!";
+            await loadMyRatings();
+        } else {
+            status.textContent = "Feil ved lagring";
         }
-    });
+    };
 
-    (async ()=>{
+    document.getElementById("reset").onclick = () => { if(confirm("Logge ut?")) { localStorage.clear(); location.reload(); } };
+
+    (async () => {
         await ensureSession();
-        if(localStorage.getItem(LS_STARTED)==="1"){
-            tastingId = localStorage.getItem(LS_TASTING);
-            const name = localStorage.getItem(LS_NAME) || "";
-            whoEl.textContent = name;
-            try {
-                await loadOlsMetaById(tastingId);
-                olsTitleEl.textContent = tastingTitle;
-                renderCurrentBeer();
-                await loadMyRatings();
-                await loadMyRatingForCurrentBeer();
-                await subscribeToCurrentBeer();
-                setup.style.display="none";
-                rate.style.display="block";
-            } catch(e) { localStorage.clear(); }
+        if(localStorage.getItem("j_id")) {
+            tastingId = localStorage.getItem("j_id");
+            document.getElementById("who").textContent = localStorage.getItem("j_name");
+            await loadMeta(tastingId);
+            await loadMyRatings();
+            await loadCurrentRating();
+            await subscribe();
+            sSetup.style.display = "none";
+            sRate.style.display = "block";
         }
-        calcTotal();
+        updateUI();
     })();
 </script>
+
 </body>
 </html>
