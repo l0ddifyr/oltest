@@ -18,25 +18,28 @@
     .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
     details summary{cursor:pointer;font-weight:600}
     pre{white-space:pre-wrap;word-break:break-word;border:1px solid #eee;padding:10px;border-radius:10px;margin-top:10px}
+    .errorBox{border:1px solid #f3c2c2;background:#fff5f5;border-radius:12px;padding:12px}
   </style>
 </head>
 <body>
 <h1>Resultater 🍺</h1>
 
+<!-- FATAL/BOOT STATUS -->
+<div id="bootMsg" class="card muted">Laster…</div>
+
 <!-- LOGIN (skjules når innlogget) -->
-<div id="loginCard" class="card">
+<div id="loginCard" class="card" style="display:none">
   <h2>Logg inn</h2>
   <div class="row">
     <input id="email" placeholder="E-post" autocomplete="email" />
     <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
   </div>
-  <button id="login" style="margin-top:10px">Logg inn</button>
+  <button id="login" type="button" style="margin-top:10px">Logg inn</button>
   <div class="muted" id="loginStatus">—</div>
 </div>
 
 <!-- APP (skjules før innlogging) -->
 <div id="resultsApp" style="display:none">
-
   <div class="card">
     <div class="row">
       <h2 style="flex:2">Velg ølsmaking</h2>
@@ -133,14 +136,50 @@
 </div>
 
 <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+  const bootMsg = document.querySelector("#bootMsg");
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  function fatal(msg, extra="") {
+    bootMsg.classList.remove("muted");
+    bootMsg.innerHTML = `
+        <div class="errorBox">
+          <b>Kunne ikke starte results.html</b><br/>
+          ${msg}<br/>
+          <div class="muted" style="margin-top:8px">${extra}</div>
+        </div>
+      `;
+  }
+
+  // 1) Last config.js robust
+  let cfg;
+  try {
+    cfg = await import("./config.js");
+  } catch (e) {
+    fatal(
+            "Finner ikke ./config.js (eller den kan ikke lastes).",
+            "Sjekk at config.js ligger i samme mappe som results.html, og at du åpner siden via http(s) (GitHub Pages / lokal server) – ikke file://."
+    );
+    console.error("config.js import failed", e);
+    throw e;
+  }
+
+  // 2) Last supabase-js robust
+  let createClient;
+  try {
+    ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
+  } catch (e) {
+    fatal(
+            "Klarte ikke laste supabase-js fra CDN.",
+            "Sjekk nett/annonsesperre (adblock) eller prøv et annet nett."
+    );
+    console.error("supabase-js import failed", e);
+    throw e;
+  }
+
+  // 3) App
+  const supabase = createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
 
   const loginCard = document.querySelector("#loginCard");
   const resultsApp = document.querySelector("#resultsApp");
-
   const loginStatus = document.querySelector("#loginStatus");
   const loadStatus = document.querySelector("#loadStatus");
 
@@ -159,17 +198,19 @@
 
   const csvOut = document.querySelector("#csvOut");
 
-  let beersMap = new Map(); // beer_no -> name|null (fra beers_public)
+  let beersMap = new Map();
   let votes = [];
   let ranking = [];
 
   function showLogin() {
+    bootMsg.style.display = "none";
     loginCard.style.display = "block";
     resultsApp.style.display = "none";
     content.style.display = "none";
   }
 
   function showApp() {
+    bootMsg.style.display = "none";
     loginCard.style.display = "none";
     resultsApp.style.display = "block";
   }
@@ -207,9 +248,7 @@
             `<option value="">Velg…</option>` +
             (data ?? []).map(o => `<option value="${o.id}">${o.title} (N=${o.total_beers || 0})</option>`).join("");
 
-    if ((data ?? []).length === 0) {
-      loadStatus.textContent = "Ingen ølsmakinger funnet for denne admin-brukeren.";
-    }
+    loadStatus.textContent = (data?.length ?? 0) ? "Velg en ølsmaking og trykk “Last resultater”." : "Ingen ølsmakinger på denne admin-brukeren.";
   }
 
   async function loadMeta(olsId) {
@@ -233,7 +272,7 @@
             .order("beer_no", { ascending: true });
 
     if (error) throw error;
-    beersMap = new Map((data ?? []).map(x => [x.beer_no, x.name])); // name null før reveal
+    beersMap = new Map((data ?? []).map(x => [x.beer_no, x.name]));
   }
 
   async function loadAllVotes(olsId) {
@@ -243,7 +282,6 @@
             .eq("tasting_id", olsId);
 
     if (error) throw error;
-
     votes = (data ?? []).map(v => ({ ...v, time: v.updated_at ?? v.created_at }));
   }
 
@@ -303,4 +341,128 @@
     switch (sortBy.value) {
       case "beer_no": out.sort((a,b) => a.beer_no - b.beer_no); break;
       case "name": out.sort((a,b) => a.display_name.localeCompare(b.display_name)); break;
-      case "score_desc": out.sort((a,b) =_
+      case "score_desc": out.sort((a,b) => b.score - a.score); break;
+      case "score_asc": out.sort((a,b) => a.score - b.score); break;
+      case "time_desc": out.sort((a,b) => new Date(b.time) - new Date(a.time)); break;
+      case "time_asc": out.sort((a,b) => new Date(a.time) - new Date(b.time)); break;
+    }
+    return out;
+  }
+
+  function buildCsv(list) {
+    const header = ["beer_no","beer_name","person","score","smak","ettersmak","farge","lukt","time"];
+    const lines = [header.join(",")];
+
+    for (const v of list) {
+      const beerName = beersMap.get(v.beer_no) ?? "";
+      lines.push([
+        v.beer_no, beerName, v.display_name, v.score, v.smak, v.ettersmak, v.farge, v.lukt, fmtTime(v.time)
+      ].map(csvEscape).join(","));
+    }
+    csvOut.textContent = lines.join("\n");
+  }
+
+  function renderVotes() {
+    const list = getFilteredVotes();
+    votesRows.innerHTML = "";
+    for (const v of list) {
+      const beerName = beersMap.get(v.beer_no) ?? null;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+          <td>${v.beer_no}</td>
+          <td>${beerName ? beerName : "<span class='muted'>(skjult)</span>"}</td>
+          <td>${v.display_name}</td>
+          <td class="right"><b>${v.score}</b></td>
+          <td class="right">${v.smak}</td>
+          <td class="right">${v.ettersmak}</td>
+          <td class="right">${v.farge}</td>
+          <td class="right">${v.lukt}</td>
+          <td class="right">${fmtTime(v.time)}</td>
+        `;
+      votesRows.appendChild(tr);
+    }
+    buildCsv(list);
+  }
+
+  document.querySelector("#copyCsv").addEventListener("click", async () => {
+    const txt = csvOut.textContent || "";
+    if (!txt) return alert("Ingen CSV å kopiere");
+    await navigator.clipboard.writeText(txt);
+    alert("CSV kopiert ✅");
+  });
+
+  [filterBeer, filterPerson, sortBy].forEach(el => el.addEventListener("change", renderVotes));
+
+  // EVENTS: login/logout/load
+  document.querySelector("#login").addEventListener("click", async () => {
+    try {
+      loginStatus.textContent = "Logger inn…";
+      const email = document.querySelector("#email").value.trim();
+      const pass = document.querySelector("#pass").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+
+      showApp();
+      await loadMyOlsmakinger();
+      loginStatus.textContent = "—";
+    } catch (e) {
+      alert(e.message);
+      loginStatus.textContent = "Feil ved innlogging";
+    }
+  });
+
+  document.querySelector("#logout").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    showLogin();
+  });
+
+  document.querySelector("#refreshList").addEventListener("click", async () => {
+    try {
+      await requireAuth();
+      await loadMyOlsmakinger();
+      loadStatus.textContent = "Liste oppdatert ✅";
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  document.querySelector("#load").addEventListener("click", async () => {
+    try {
+      await requireAuth();
+      const id = olsSelect.value;
+      if (!id) return alert("Velg ølsmaking");
+
+      loadStatus.textContent = "Laster…";
+
+      await loadMeta(id);
+      await loadBeersPublic(id);
+      await loadAllVotes(id);
+
+      buildRanking();
+      populateFilters();
+      renderRanking();
+      renderVotes();
+
+      content.style.display = "block";
+      loadStatus.textContent = `Lastet ✅ (${votes.length} stemmer)`;
+    } catch (e) {
+      alert(e.message);
+      loadStatus.textContent = "Feil";
+    }
+  });
+
+  // INIT
+  (async () => {
+    // hvis du er logget inn fra før
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      showApp();
+      await loadMyOlsmakinger();
+    } else {
+      showLogin();
+    }
+  })();
+</script>
+</body>
+</html>
