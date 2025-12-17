@@ -8,13 +8,13 @@
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background-color: #f8f9fa; color: #333; }
     .card { background: white; border: 1px solid #ddd; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    h1, h2 { color: #800000; text-align: center; }
+    h1, h2 { color: #800000; text-align: center; margin-top: 0; }
 
     input, button, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
     button { background: #d4a017; color: white; border: none; font-weight: 700; cursor: pointer; }
     button.secondary { background: #eee; color: #333; border: 1px solid #ddd; margin-top: 10px; }
 
-    .chart-container { position: relative; height: 40vh; width: 100%; margin: 20px 0; }
+    .chart-container { position: relative; height: 50vh; width: 100%; margin: 20px 0; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; }
     th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
@@ -24,49 +24,50 @@
     .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: bold; background: #eee; }
     .pill.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
     .muted { color: #666; font-size: 13px; text-align: center; }
+    .hidden { display: none !important; }
+
+    /* Vinner-highlight */
+    .winner-row { background-color: #fff9eb; font-weight: bold; }
   </style>
 </head>
 <body>
 
 <h1>Resultater 🍻</h1>
 
-<div id="bootMsg" class="card muted">Laster systemet...</div>
-
-<div id="loginCard" class="card" style="display:none">
-  <h2>Admin Logg inn</h2>
-  <input id="email" placeholder="E-post" autocomplete="email" style="margin-bottom:10px" />
+<div id="sectionLogin" class="card">
+  <h2>Logg inn for resultater</h2>
+  <input id="email" placeholder="E-post" style="margin-bottom:10px" />
   <input id="pass" placeholder="Passord" type="password" />
-  <button id="login" style="margin-top:10px">Se resultater</button>
+  <button id="loginBtn" style="margin-top:10px">Se live resultater</button>
 </div>
 
-<div id="resultsApp" style="display:none">
+<div id="sectionApp" class="hidden">
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-      <h3 style="margin:0">Velg test</h3>
-      <button id="logout" class="secondary" style="width:auto; margin:0">Log ut</button>
+      <h3 style="margin:0">Velg ølsmaking</h3>
+      <button id="logoutBtn" class="secondary" style="width:auto; margin:0; padding: 8px 12px;">Logg ut</button>
     </div>
     <select id="olsSelect"><option value="">Laster ølsmakinger...</option></select>
-    <button id="load" style="margin-top:10px">Oppdater Resultater 🔄</button>
+    <button id="refreshBtn" style="margin-top:10px">Oppdater Resultater 🔄</button>
   </div>
 
-  <div id="content" style="display:none">
+  <div id="sectionContent" class="hidden">
     <div class="card">
-      <h2>Toppliste</h2>
+      <h2 id="chartTitle">Stillingen akkurat nå</h2>
       <div class="chart-container">
         <canvas id="resultsChart"></canvas>
       </div>
     </div>
 
     <div class="card">
-      <h2>Ranking detaljer</h2>
-      <div class="muted" id="metaStatus"></div>
+      <h2>Ranking</h2>
+      <div id="statusPillContainer" style="text-align:center; margin-bottom:10px;"></div>
       <table>
         <thead>
         <tr>
           <th>#</th>
-          <th>Øl / Navn</th>
+          <th>Øl / Fasit</th>
           <th class="right">Snitt</th>
           <th class="right">Stemmer</th>
         </tr>
@@ -77,23 +78,16 @@
 
     <div class="card">
       <details>
-        <summary style="cursor:pointer; font-weight:bold">Se alle enkeltstemmer</summary>
-        <div class="grid" style="margin-top:15px">
-          <select id="sortBy">
-            <option value="score_desc">Høyest score</option>
-            <option value="beer_no">Ølnummer</option>
-            <option value="time_desc">Siste først</option>
-          </select>
-        </div>
-        <table style="font-size: 13px;">
+        <summary style="cursor:pointer; font-weight:bold; text-align:center;">Se alle enkeltstemmer</summary>
+        <table style="font-size: 12px; margin-top:15px;">
           <thead>
           <tr>
             <th>Øl</th>
-            <th>Person</th>
+            <th>Navn</th>
             <th class="right">Score</th>
           </tr>
           </thead>
-          <tbody id="votesRows"></tbody>
+          <tbody id="allVotesRows"></tbody>
         </table>
       </details>
     </div>
@@ -106,92 +100,97 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let myChart = null;
-  let beersMap = new Map();
-  let votes = [];
-  let isRevealed = false;
 
-  const resultsApp = document.querySelector("#resultsApp"), loginCard = document.querySelector("#loginCard");
-  const olsSelect = document.querySelector("#olsSelect"), content = document.querySelector("#content");
-  const rankingRows = document.querySelector("#rankingRows"), votesRows = document.querySelector("#votesRows");
+  // Navigasjon
+  function showStep(step) {
+    document.getElementById("sectionLogin").classList.toggle("hidden", step !== "login");
+    document.getElementById("sectionApp").classList.toggle("hidden", step !== "app");
+  }
 
-  // AUTH
-  async function checkAuth() {
+  // Auth
+  async function checkSession() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      showApp();
-      loadTastings();
-    } else {
-      showLogin();
-    }
+    if (session) { showStep("app"); loadTastings(); } else { showStep("login"); }
   }
 
-  function showLogin() {
-    loginCard.style.display = "block";
-    resultsApp.style.display = "none";
-    document.querySelector("#bootMsg").style.display = "none";
-  }
-
-  function showApp() {
-    resultsApp.style.display = "block";
-    loginCard.style.display = "none";
-    document.querySelector("#bootMsg").style.display = "none";
-  }
-
-  document.querySelector("#login").onclick = async () => {
+  document.getElementById("loginBtn").onclick = async () => {
     const { error } = await supabase.auth.signInWithPassword({
-      email: document.querySelector("#email").value,
-      password: document.querySelector("#pass").value
+      email: document.getElementById("email").value,
+      password: document.getElementById("pass").value
     });
-    if (error) alert(error.message); else checkAuth();
+    if (error) alert(error.message); else checkSession();
   };
 
-  document.querySelector("#logout").onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+  document.getElementById("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.reload(); };
 
-  // DATA LASTING
+  // Last tilgjengelige smakinger
   async function loadTastings() {
-    const { data } = await supabase.from("tastings").select("*").order("created_at", { ascending: false });
-    olsSelect.innerHTML = `<option value="">Velg ølsmaking...</option>` +
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("tastings").select("*").eq("created_by", user.id).order("created_at", { ascending: false });
+    document.getElementById("olsSelect").innerHTML = `<option value="">Velg ølsmaking...</option>` +
             data.map(o => `<option value="${o.id}">${o.title}</option>`).join("");
   }
 
-  async function loadAllData() {
-    const id = olsSelect.value;
+  // Hovedfunksjon for å hente og vise data
+  async function loadResults() {
+    const id = document.getElementById("olsSelect").value;
     if (!id) return;
 
-    // 1. Last Meta & Reveal status
+    // 1. Hent Meta-data (for reveal-status)
     const { data: meta } = await supabase.from("tastings").select("*").eq("id", id).single();
-    isRevealed = meta.revealed;
-    document.querySelector("#metaStatus").innerHTML = `Status: ${isRevealed ? "<span class='pill success'>REVEALED ✅</span>" : "<span class='pill'>SKJULT 🔒</span>"}`;
 
-    // 2. Last Ølnavn (beers_public er en view som tar hensyn til revealed)
+    // 2. Hent Fasit (beers_public returnerer bare navn hvis revealed=true)
     const { data: beers } = await supabase.from("beers_public").select("*").eq("tasting_id", id);
-    beersMap = new Map(beers.map(b => [b.beer_no, b.name]));
+    const beersMap = new Map(beers.map(b => [b.beer_no, b.name]));
 
-    // 3. Last Stemmer
-    const { data: r } = await supabase.from("ratings").select("*").eq("tasting_id", id);
-    votes = r;
+    // 3. Hent alle stemmer
+    const { data: ratings } = await supabase.from("ratings").select("*").eq("tasting_id", id);
 
-    processAndRender();
+    renderResults(ratings, beersMap, meta);
   }
 
-  function processAndRender() {
-    const beerStats = {};
-    votes.forEach(v => {
-      if (!beerStats[v.beer_no]) beerStats[v.beer_no] = { beer_no: v.beer_no, sum: 0, count: 0 };
-      beerStats[v.beer_no].sum += v.score;
-      beerStats[v.beer_no].count++;
+  function renderResults(ratings, beersMap, meta) {
+    // Beregn statistikk
+    const stats = {};
+    ratings.forEach(r => {
+      if (!stats[r.beer_no]) stats[r.beer_no] = { beer_no: r.beer_no, sum: 0, count: 0 };
+      stats[r.beer_no].sum += r.score;
+      stats[r.beer_no].count++;
     });
 
-    const ranking = Object.values(beerStats).map(b => ({
-      ...b,
-      avg: b.sum / b.count,
-      name: beersMap.get(b.beer_no) || `Øl #${b.beer_no}`
+    const ranking = Object.values(stats).map(s => ({
+      ...s,
+      avg: s.sum / s.count,
+      name: beersMap.get(s.beer_no) || `Øl #${s.beer_no}`
     })).sort((a, b) => b.avg - a.avg);
 
+    // Oppdater UI
+    document.getElementById("sectionContent").classList.remove("hidden");
+    document.getElementById("statusPillContainer").innerHTML = meta.revealed ?
+            `<span class="pill success">REVEALED: Fasit er ute! ✅</span>` :
+            `<span class="pill">SJULT: Kun poeng vises 🔒</span>`;
+
     renderChart(ranking);
-    renderTable(ranking);
-    renderAllVotes();
-    content.style.display = "block";
+
+    // Render Tabell
+    document.getElementById("rankingRows").innerHTML = ranking.map((r, index) => `
+      <tr class="${index === 0 ? 'winner-row' : ''}">
+        <td><b>${r.beer_no}</b></td>
+        <td>${r.name}</td>
+        <td class="right"><b>${r.avg.toFixed(1)}</b></td>
+        <td class="right muted">${r.count} stemmer</td>
+      </tr>
+    `).join("");
+
+    // Render Enkeltstemmer
+    const sortedVotes = [...ratings].sort((a,b) => b.score - a.score);
+    document.getElementById("allVotesRows").innerHTML = sortedVotes.map(v => `
+      <tr>
+        <td>Øl #${v.beer_no}</td>
+        <td>${v.display_name}</td>
+        <td class="right">${v.score}</td>
+      </tr>
+    `).join("");
   }
 
   function renderChart(ranking) {
@@ -203,54 +202,30 @@
       data: {
         labels: ranking.map(r => r.name),
         datasets: [{
-          label: 'Gjennomsnittsscore',
+          label: 'Snittscore (0-100)',
           data: ranking.map(r => r.avg.toFixed(1)),
           backgroundColor: '#d4a017',
-          borderRadius: 8
+          borderRadius: 8,
+          borderWidth: 1
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, max: 100 } }
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        },
+        plugins: {
+          legend: { display: false }
+        }
       }
     });
   }
 
-  function renderTable(ranking) {
-    rankingRows.innerHTML = ranking.map(r => `
-      <tr>
-        <td><b>${r.beer_no}</b></td>
-        <td>${r.name}</td>
-        <td class="right"><b>${r.avg.toFixed(1)}</b></td>
-        <td class="right muted">${r.count} stk</td>
-      </tr>
-    `).join("");
-  }
+  document.getElementById("refreshBtn").onclick = loadResults;
+  document.getElementById("olsSelect").onchange = loadResults;
 
-  function renderAllVotes() {
-    let sortedVotes = [...votes];
-    const sortVal = document.querySelector("#sortBy").value;
-
-    if(sortVal === "score_desc") sortedVotes.sort((a,b) => b.score - a.score);
-    if(sortVal === "beer_no") sortedVotes.sort((a,b) => a.beer_no - b.beer_no);
-    if(sortVal === "time_desc") sortedVotes.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-
-    votesRows.innerHTML = sortedVotes.map(v => `
-      <tr>
-        <td>Øl ${v.beer_no}</td>
-        <td>${v.display_name}</td>
-        <td class="right">${v.score}</td>
-      </tr>
-    `).join("");
-  }
-
-  document.querySelector("#load").onclick = loadAllData;
-  document.querySelector("#sortBy").onchange = renderAllVotes;
-  olsSelect.onchange = loadAllData;
-
-  checkAuth();
+  checkSession();
 </script>
 </body>
 </html>
