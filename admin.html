@@ -3,89 +3,101 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Juleøl admin</title>
+  <title>Admin – Juleøl</title>
   <style>
     body{font-family:system-ui;margin:16px}
     .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
     input,button,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
     label{display:block;font-weight:600;margin-top:10px}
     .muted{color:#666;font-size:13px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px solid #eee;padding:8px 4px;text-align:left}
     .row{display:flex;gap:10px;flex-wrap:wrap}
     .row>*{flex:1;min-width:160px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{border-bottom:1px solid #eee;padding:8px 6px;text-align:left}
+    .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
   </style>
 </head>
 <body>
 <h1>Admin 🍺</h1>
 
-<div class="card">
-  <h2>Login</h2>
+<!-- LOGIN -->
+<div id="loginCard" class="card">
+  <h2>Logg inn</h2>
   <div class="row">
     <input id="email" placeholder="E-post" autocomplete="email" />
     <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
   </div>
   <div class="row" style="margin-top:10px">
     <button id="login">Logg inn</button>
-    <button id="logout" type="button">Logg ut</button>
   </div>
   <div class="muted" id="loginStatus">—</div>
 </div>
 
-<div class="card">
-  <h2>Velg / opprett tasting</h2>
+<!-- ADMIN APP -->
+<div id="adminApp" style="display:none">
 
-  <label>Eksisterende tastings</label>
-  <select id="tastingSelect">
-    <option value="">—</option>
-  </select>
+  <div class="card">
+    <div class="row">
+      <h2 style="flex:1">Ølsmaking</h2>
+      <button id="logout" type="button">Logg ut</button>
+    </div>
 
-  <div class="row">
-    <div>
-      <label>Tittel</label>
-      <input id="title" placeholder="Juleøl-test" />
+    <label>Velg eksisterende</label>
+    <select id="olsSelect">
+      <option value="">Laster…</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label>Tittel</label>
+        <input id="title" placeholder="Juleøl-test" />
+      </div>
+      <div>
+        <label>Antall øl (N)</label>
+        <input id="totalBeers" inputmode="numeric" placeholder="10" />
+      </div>
     </div>
-    <div>
-      <label>Antall øl (N)</label>
-      <input id="totalBeers" inputmode="numeric" placeholder="10" />
+
+    <div class="row" style="margin-top:10px">
+      <button id="createOls" type="button">Opprett ny</button>
+      <button id="saveMeta" type="button">Lagre</button>
+      <button id="reloadOls" type="button">Oppdater liste</button>
     </div>
+
+    <div class="muted" id="olsStatus">—</div>
   </div>
 
-  <div class="row" style="margin-top:10px">
-    <button id="createTasting" type="button">Opprett ny</button>
-    <button id="saveMeta" type="button">Lagre tittel/N</button>
-    <button id="loadBeers" type="button">Last ølliste</button>
+  <div class="card">
+    <h2>Logg øl (skjult for deltakere)</h2>
+
+    <div class="row">
+      <div>
+        <label>Øl-nummer</label>
+        <input id="beerNo" inputmode="numeric" placeholder="3" />
+      </div>
+      <div>
+        <label>Ølnavn</label>
+        <input id="beerName" placeholder="Mack Juleøl" />
+      </div>
+    </div>
+
+    <button id="saveBeer" type="button" style="margin-top:10px">
+      Lagre / oppdater øl
+    </button>
+
+    <table>
+      <thead><tr><th>#</th><th>Navn</th></tr></thead>
+      <tbody id="beerRows"></tbody>
+    </table>
   </div>
 
-  <div class="muted" id="tastingStatus">—</div>
-</div>
-
-<div class="card">
-  <h2>Logg øl underveis (skjult for andre)</h2>
-
-  <div class="row">
-    <div>
-      <label>Øl-nummer</label>
-      <input id="beerNo" inputmode="numeric" placeholder="3" />
-    </div>
-    <div>
-      <label>Ølnavn</label>
-      <input id="beerName" placeholder="Mack Juleøl" />
+  <div class="card">
+    <h2>Reveal</h2>
+    <div class="row">
+      <button id="reveal" type="button">Reveal ølsmaking</button>
+      <span class="pill" id="revealPill">—</span>
     </div>
   </div>
-
-  <button id="saveBeer" type="button" style="margin-top:10px">Lagre / oppdater mapping</button>
-
-  <table>
-    <thead><tr><th>#</th><th>Navn</th></tr></thead>
-    <tbody id="beerRows"></tbody>
-  </table>
-</div>
-
-<div class="card">
-  <h2>Reveal</h2>
-  <button id="reveal" type="button">Reveal (revealed=true)</button>
-  <div class="muted">Etter reveal vil <code>beers_public</code> vise navn.</div>
 </div>
 
 <script type="module">
@@ -94,16 +106,18 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  const loginCard = document.querySelector("#loginCard");
+  const adminApp = document.querySelector("#adminApp");
   const loginStatus = document.querySelector("#loginStatus");
-  const tastingStatus = document.querySelector("#tastingStatus");
 
-  const tastingSelect = document.querySelector("#tastingSelect");
+  const olsSelect = document.querySelector("#olsSelect");
   const titleEl = document.querySelector("#title");
   const totalBeersEl = document.querySelector("#totalBeers");
-
+  const olsStatus = document.querySelector("#olsStatus");
   const beerRows = document.querySelector("#beerRows");
+  const revealPill = document.querySelector("#revealPill");
 
-  let currentTastingId = null;
+  let currentOlsId = null;
 
   function clampInt(v, min, max) {
     const n = Number(v);
@@ -113,54 +127,64 @@
     return i;
   }
 
+  function showAdmin() {
+    loginCard.style.display = "none";
+    adminApp.style.display = "block";
+  }
+
+  function showLogin() {
+    adminApp.style.display = "none";
+    loginCard.style.display = "block";
+  }
+
   async function requireAuth() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error("Ikke logget inn");
+    if (!session?.user) throw new Error("Ikke innlogget");
     return session;
   }
 
-  async function loadMyTastings() {
-    await requireAuth();
-
-    const { data: { session } } = await supabase.auth.getSession();
+  async function loadMyOlsmakinger() {
+    const session = await requireAuth();
 
     const { data, error } = await supabase
             .from("tastings")
-            .select("id, title, total_beers, revealed, created_at, created_by")
+            .select("id, title, total_beers, revealed, created_at")
             .eq("created_by", session.user.id)
             .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    tastingSelect.innerHTML =
+    olsSelect.innerHTML =
             `<option value="">Velg…</option>` +
-            (data ?? []).map(t => `<option value="${t.id}">${t.title} (N=${t.total_beers || 0})</option>`).join("");
+            (data ?? []).map(o => `<option value="${o.id}">${o.title} (N=${o.total_beers})</option>`).join("");
   }
 
-  async function loadTastingMeta(id) {
+  async function loadOlsMeta(id) {
     const { data, error } = await supabase
             .from("tastings")
-            .select("id, title, total_beers, revealed")
+            .select("title, total_beers, revealed")
             .eq("id", id)
             .single();
+
     if (error) throw error;
-    titleEl.value = data.title ?? "";
-    totalBeersEl.value = data.total_beers ?? 0;
-    tastingStatus.textContent = `Valgt: ${data.title} — N=${data.total_beers} — ${data.revealed ? "REVEALED" : "skjult"}`;
+
+    titleEl.value = data.title;
+    totalBeersEl.value = data.total_beers;
+    revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
+    olsStatus.textContent = `Valgt: ${data.title}`;
   }
 
   async function refreshBeers() {
-    if (!currentTastingId) return;
     const { data, error } = await supabase
             .from("beers")
             .select("beer_no, name")
-            .eq("tasting_id", currentTastingId)
-            .order("beer_no", { ascending: true });
+            .eq("tasting_id", currentOlsId)
+            .order("beer_no");
 
     if (error) throw error;
 
     beerRows.innerHTML = "";
-    for (const b of (data ?? [])) {
+    for (const b of data ?? []) {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${b.beer_no}</td><td>${b.name}</td>`;
       beerRows.appendChild(tr);
@@ -168,86 +192,83 @@
   }
 
   document.querySelector("#login").addEventListener("click", async () => {
-    const email = document.querySelector("#email").value.trim();
-    const pass = document.querySelector("#pass").value;
-    loginStatus.textContent = "Logger inn…";
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) return alert(error.message);
-    loginStatus.textContent = "Innlogget ✅";
-    await loadMyTastings();
+    try {
+      loginStatus.textContent = "Logger inn…";
+      const email = document.querySelector("#email").value.trim();
+      const pass = document.querySelector("#pass").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+
+      showAdmin();
+      await loadMyOlsmakinger();
+      olsStatus.textContent = "Velg eller opprett ølsmaking.";
+    } catch (e) {
+      alert(e.message);
+      loginStatus.textContent = "Feil ved innlogging";
+    }
   });
 
   document.querySelector("#logout").addEventListener("click", async () => {
     await supabase.auth.signOut();
-    loginStatus.textContent = "Logget ut";
-    tastingSelect.innerHTML = `<option value="">—</option>`;
-    currentTastingId = null;
+    showLogin();
   });
 
-  tastingSelect.addEventListener("change", async () => {
-    const id = tastingSelect.value || null;
-    currentTastingId = id;
-    if (!id) return;
-    await loadTastingMeta(id);
+  olsSelect.addEventListener("change", async () => {
+    currentOlsId = olsSelect.value || null;
+    if (!currentOlsId) return;
+    await loadOlsMeta(currentOlsId);
     await refreshBeers();
   });
 
-  document.querySelector("#createTasting").addEventListener("click", async () => {
-    await requireAuth();
+  document.querySelector("#createOls").addEventListener("click", async () => {
     const title = (titleEl.value || "Juleøl-test").trim();
     const n = clampInt(totalBeersEl.value, 1, 200);
     if (n === null) return alert("N må være 1–200");
 
     const { data, error } = await supabase
             .from("tastings")
-            .insert({ title, revealed: false, total_beers: n })
+            .insert({ title, total_beers: n, revealed: false })
             .select("id")
             .single();
 
     if (error) return alert(error.message);
 
-    tastingStatus.textContent = "Opprettet ✅";
-    await loadMyTastings();
-    tastingSelect.value = data.id;
-    currentTastingId = data.id;
-    await loadTastingMeta(data.id);
+    await loadMyOlsmakinger();
+    olsSelect.value = data.id;
+    currentOlsId = data.id;
+    await loadOlsMeta(data.id);
     await refreshBeers();
   });
 
   document.querySelector("#saveMeta").addEventListener("click", async () => {
-    await requireAuth();
-    if (!currentTastingId) return alert("Velg tasting først");
-    const title = (titleEl.value || "Juleøl-test").trim();
+    if (!currentOlsId) return alert("Velg ølsmaking");
+
+    const title = titleEl.value.trim();
     const n = clampInt(totalBeersEl.value, 1, 200);
     if (n === null) return alert("N må være 1–200");
 
     const { error } = await supabase
             .from("tastings")
             .update({ title, total_beers: n })
-            .eq("id", currentTastingId);
+            .eq("id", currentOlsId);
 
     if (error) return alert(error.message);
-    tastingStatus.textContent = "Oppdatert ✅";
-    await loadMyTastings();
-  });
-
-  document.querySelector("#loadBeers").addEventListener("click", async () => {
-    await requireAuth();
-    await refreshBeers();
+    await loadMyOlsmakinger();
+    await loadOlsMeta(currentOlsId);
+    olsStatus.textContent = "Oppdatert ✅";
   });
 
   document.querySelector("#saveBeer").addEventListener("click", async () => {
-    await requireAuth();
-    if (!currentTastingId) return alert("Velg tasting først");
+    if (!currentOlsId) return alert("Velg ølsmaking");
 
     const beerNo = clampInt(document.querySelector("#beerNo").value, 1, 9999);
     const beerName = document.querySelector("#beerName").value.trim();
-    if (beerNo === null) return alert("Ugyldig ølnummer");
-    if (!beerName) return alert("Mangler ølnavn");
+    if (beerNo === null || !beerName) return alert("Ugyldig input");
 
     const { error } = await supabase
             .from("beers")
-            .upsert({ tasting_id: currentTastingId, beer_no: beerNo, name: beerName });
+            .upsert({ tasting_id: currentOlsId, beer_no: beerNo, name: beerName });
 
     if (error) return alert(error.message);
 
@@ -256,31 +277,28 @@
   });
 
   document.querySelector("#reveal").addEventListener("click", async () => {
-    await requireAuth();
-    if (!currentTastingId) return alert("Velg tasting først");
-    if (!confirm("Reveal nå? Etter dette blir ølnavn synlig i results.")) return;
+    if (!currentOlsId) return alert("Velg ølsmaking");
+    if (!confirm("Reveal nå?")) return;
 
     const { error } = await supabase
             .from("tastings")
             .update({ revealed: true })
-            .eq("id", currentTastingId);
+            .eq("id", currentOlsId);
 
     if (error) return alert(error.message);
-    alert("Reveal ✅");
-    await loadTastingMeta(currentTastingId);
+
+    await loadOlsMeta(currentOlsId);
   });
 
-  // Start: bare vis liste hvis allerede innlogget
+  // Init
   (async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        loginStatus.textContent = "Innlogget ✅";
-        await loadMyTastings();
-      } else {
-        loginStatus.textContent = "Ikke innlogget";
-      }
-    } catch {}
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      showAdmin();
+      await loadMyOlsmakinger();
+    } else {
+      showLogin();
+    }
   })();
 </script>
 </body>
