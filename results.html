@@ -3,122 +3,132 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Juleøl – Resultater</title>
+  <title>Resultater – Juleøl</title>
   <style>
     body{font-family:system-ui;margin:16px}
     .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0}
     input,button,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;font-size:16px}
     label{display:block;font-weight:600;margin-top:10px}
     .muted{color:#666;font-size:13px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .row>*{flex:1;min-width:160px}
     table{width:100%;border-collapse:collapse;margin-top:10px}
     th,td{border-bottom:1px solid #eee;padding:8px 6px;text-align:left;vertical-align:top}
     .right{text-align:right}
     .pill{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;font-size:12px}
     details summary{cursor:pointer;font-weight:600}
+    pre{white-space:pre-wrap;word-break:break-word;border:1px solid #eee;padding:10px;border-radius:10px;margin-top:10px}
   </style>
 </head>
 <body>
 <h1>Resultater 🍺</h1>
 
-<div class="card">
-  <h2>Admin-login</h2>
+<!-- LOGIN (skjules når innlogget) -->
+<div id="loginCard" class="card">
+  <h2>Logg inn</h2>
   <div class="row">
     <input id="email" placeholder="E-post" autocomplete="email" />
     <input id="pass" placeholder="Passord" type="password" autocomplete="current-password" />
   </div>
-  <div class="row" style="margin-top:10px">
-    <button id="login">Logg inn</button>
-    <button id="logout" type="button">Logg ut</button>
-  </div>
-  <div class="muted" id="authStatus">—</div>
+  <button id="login" style="margin-top:10px">Logg inn</button>
+  <div class="muted" id="loginStatus">—</div>
 </div>
 
-<div class="card">
-  <h2>Velg tasting</h2>
-  <select id="tastingSelect">
-    <option value="">Logg inn først…</option>
-  </select>
-  <div class="row" style="margin-top:10px">
-    <button id="load">Last resultater</button>
-  </div>
-  <div class="muted" id="loadStatus">—</div>
-</div>
+<!-- APP (skjules før innlogging) -->
+<div id="resultsApp" style="display:none">
 
-<div id="content" style="display:none">
   <div class="card">
-    <h2>Status</h2>
     <div class="row">
-      <div><span class="pill" id="revealPill">—</span></div>
-      <div class="muted" id="metaText">—</div>
+      <h2 style="flex:2">Velg ølsmaking</h2>
+      <button id="logout" type="button" style="flex:1">Logg ut</button>
     </div>
+
+    <select id="olsSelect">
+      <option value="">Laster…</option>
+    </select>
+
+    <div class="row" style="margin-top:10px">
+      <button id="load" type="button">Last resultater</button>
+      <button id="refreshList" type="button">Oppdater liste</button>
+    </div>
+
+    <div class="muted" id="loadStatus">—</div>
   </div>
 
-  <div class="card">
-    <h2>Ranking per øl</h2>
-    <table>
-      <thead>
-      <tr>
-        <th>Øl #</th>
-        <th>Navn</th>
-        <th class="right">Snitt</th>
-        <th class="right">#</th>
-        <th class="right">Best</th>
-        <th class="right">Worst</th>
-      </tr>
-      </thead>
-      <tbody id="rankingRows"></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h2>Alle stemmer (hvem ga hva)</h2>
-
-    <div class="row">
-      <div>
-        <label>Filter: Øl</label>
-        <select id="filterBeer"><option value="">Alle</option></select>
-      </div>
-      <div>
-        <label>Filter: Person</label>
-        <select id="filterPerson"><option value="">Alle</option></select>
-      </div>
-      <div>
-        <label>Sorter</label>
-        <select id="sortBy">
-          <option value="beer_no">Ølnr</option>
-          <option value="score_desc">Score (høy→lav)</option>
-          <option value="score_asc">Score (lav→høy)</option>
-          <option value="name">Navn</option>
-          <option value="time_desc">Tid (ny→gammel)</option>
-          <option value="time_asc">Tid (gammel→ny)</option>
-        </select>
+  <div id="content" style="display:none">
+    <div class="card">
+      <h2>Status</h2>
+      <div class="row">
+        <div><span class="pill" id="revealPill">—</span></div>
+        <div class="muted" id="metaText">—</div>
       </div>
     </div>
 
-    <table>
-      <thead>
-      <tr>
-        <th>Øl #</th>
-        <th>Navn</th>
-        <th>Person</th>
-        <th class="right">Total</th>
-        <th class="right">Smak</th>
-        <th class="right">Etter</th>
-        <th class="right">Farge</th>
-        <th class="right">Lukt</th>
-        <th class="right">Tid</th>
-      </tr>
-      </thead>
-      <tbody id="votesRows"></tbody>
-    </table>
+    <div class="card">
+      <h2>Ranking per øl</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>Øl #</th>
+          <th>Navn</th>
+          <th class="right">Snitt</th>
+          <th class="right">#</th>
+          <th class="right">Best</th>
+          <th class="right">Worst</th>
+        </tr>
+        </thead>
+        <tbody id="rankingRows"></tbody>
+      </table>
+    </div>
 
-    <details style="margin-top:12px">
-      <summary>Eksporter CSV (kopier)</summary>
-      <button id="copyCsv" type="button">Kopier CSV</button>
-      <pre id="csvOut" style="white-space:pre-wrap; word-break:break-word; border:1px solid #eee; padding:10px; border-radius:10px; margin-top:10px;"></pre>
-    </details>
+    <div class="card">
+      <h2>Alle stemmer (hvem ga hva)</h2>
+
+      <div class="row">
+        <div>
+          <label>Filter: Øl</label>
+          <select id="filterBeer"><option value="">Alle</option></select>
+        </div>
+        <div>
+          <label>Filter: Person</label>
+          <select id="filterPerson"><option value="">Alle</option></select>
+        </div>
+        <div>
+          <label>Sorter</label>
+          <select id="sortBy">
+            <option value="beer_no">Ølnr</option>
+            <option value="score_desc">Score (høy→lav)</option>
+            <option value="score_asc">Score (lav→høy)</option>
+            <option value="name">Navn</option>
+            <option value="time_desc">Tid (ny→gammel)</option>
+            <option value="time_asc">Tid (gammel→ny)</option>
+          </select>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+        <tr>
+          <th>Øl #</th>
+          <th>Navn</th>
+          <th>Person</th>
+          <th class="right">Total</th>
+          <th class="right">Smak</th>
+          <th class="right">Etter</th>
+          <th class="right">Farge</th>
+          <th class="right">Lukt</th>
+          <th class="right">Tid</th>
+        </tr>
+        </thead>
+        <tbody id="votesRows"></tbody>
+      </table>
+
+      <details style="margin-top:12px">
+        <summary>Eksporter CSV (kopier)</summary>
+        <button id="copyCsv" type="button" style="margin-top:10px">Kopier CSV</button>
+        <pre id="csvOut"></pre>
+      </details>
+    </div>
   </div>
 </div>
 
@@ -128,12 +138,15 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const authStatus = document.querySelector("#authStatus");
+  const loginCard = document.querySelector("#loginCard");
+  const resultsApp = document.querySelector("#resultsApp");
+
+  const loginStatus = document.querySelector("#loginStatus");
   const loadStatus = document.querySelector("#loadStatus");
 
-  const tastingSelect = document.querySelector("#tastingSelect");
-
+  const olsSelect = document.querySelector("#olsSelect");
   const content = document.querySelector("#content");
+
   const revealPill = document.querySelector("#revealPill");
   const metaText = document.querySelector("#metaText");
 
@@ -150,6 +163,23 @@
   let votes = [];
   let ranking = [];
 
+  function showLogin() {
+    loginCard.style.display = "block";
+    resultsApp.style.display = "none";
+    content.style.display = "none";
+  }
+
+  function showApp() {
+    loginCard.style.display = "none";
+    resultsApp.style.display = "block";
+  }
+
+  async function requireAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error("Du må logge inn.");
+    return session;
+  }
+
   function fmtTime(iso) {
     if (!iso) return "";
     return new Date(iso).toLocaleString();
@@ -161,56 +191,56 @@
     return s;
   }
 
-  async function requireAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error("Du må logge inn som admin.");
-    return session;
-  }
-
-  async function loadMyTastings() {
-    const { data: { session } } = await supabase.auth.getSession();
+  async function loadMyOlsmakinger() {
+    const session = await requireAuth();
+    const uid = session.user.id;
 
     const { data, error } = await supabase
             .from("tastings")
             .select("id, title, total_beers, created_at, created_by")
-            .eq("created_by", session.user.id)
+            .eq("created_by", uid)
             .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    tastingSelect.innerHTML =
+    olsSelect.innerHTML =
             `<option value="">Velg…</option>` +
-            (data ?? []).map(t => `<option value="${t.id}">${t.title} (N=${t.total_beers || 0})</option>`).join("");
+            (data ?? []).map(o => `<option value="${o.id}">${o.title} (N=${o.total_beers || 0})</option>`).join("");
+
+    if ((data ?? []).length === 0) {
+      loadStatus.textContent = "Ingen ølsmakinger funnet for denne admin-brukeren.";
+    }
   }
 
-  async function loadMeta(tastingId) {
+  async function loadMeta(olsId) {
     const { data, error } = await supabase
             .from("tastings")
-            .select("title, total_beers, revealed")
-            .eq("id", tastingId)
+            .select("title, total_beers, revealed, join_code, current_beer_no")
+            .eq("id", olsId)
             .single();
+
     if (error) throw error;
 
-    metaText.textContent = `${data.title} — N=${data.total_beers}`;
     revealPill.textContent = data.revealed ? "REVEALED ✅" : "SKJULT 🔒";
+    metaText.textContent = `${data.title} — N=${data.total_beers} — Join-kode: ${data.join_code ?? "—"} — Nå: Øl #${data.current_beer_no ?? 1}`;
   }
 
-  async function loadBeersPublic(tastingId) {
+  async function loadBeersPublic(olsId) {
     const { data, error } = await supabase
             .from("beers_public")
             .select("beer_no, name")
-            .eq("tasting_id", tastingId)
+            .eq("tasting_id", olsId)
             .order("beer_no", { ascending: true });
 
     if (error) throw error;
     beersMap = new Map((data ?? []).map(x => [x.beer_no, x.name])); // name null før reveal
   }
 
-  async function loadAllVotes(tastingId) {
+  async function loadAllVotes(olsId) {
     const { data, error } = await supabase
             .from("ratings")
             .select("beer_no, score, smak, ettersmak, farge, lukt, display_name, updated_at, created_at")
-            .eq("tasting_id", tastingId);
+            .eq("tasting_id", olsId);
 
     if (error) throw error;
 
@@ -273,4 +303,4 @@
     switch (sortBy.value) {
       case "beer_no": out.sort((a,b) => a.beer_no - b.beer_no); break;
       case "name": out.sort((a,b) => a.display_name.localeCompare(b.display_name)); break;
-      case
+      case "score_desc": out.sort((a,b) =_
