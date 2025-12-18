@@ -215,9 +215,26 @@
   document.getElementById("addBeerToPoolBtn").onclick = async () => {
     const name = document.getElementById("newBeerName").value.trim();
     if(!name) return;
-    await supabase.from("beers").insert({ tasting_id: currentOlsId, name: name, beer_no: 0 });
-    document.getElementById("newBeerName").value = "";
-    refreshBeers();
+
+    console.log("Prøver å legge til øl:", name, "i test:", currentOlsId);
+
+    const { data, error } = await supabase
+            .from("beers")
+            .insert({
+              tasting_id: currentOlsId,
+              name: name,
+              beer_no: 0
+            })
+            .select();
+
+    if (error) {
+      console.error("Supabase feil:", error);
+      alert("Kunne ikke lagre: " + error.message);
+    } else {
+      console.log("Lagret suksessfullt:", data);
+      document.getElementById("newBeerName").value = "";
+      refreshBeers();
+    }
   };
 
   document.getElementById("saveToFasitBtn").onclick = async () => {
