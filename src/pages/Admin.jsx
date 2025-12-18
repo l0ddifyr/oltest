@@ -250,8 +250,20 @@ export default function Admin() {
                 <div className="text-4xl font-black text-[#800000] my-2">Øl #{currentBeerNo}</div>
 
                 <div className="grid grid-cols-2 gap-4 mt-6">
-                    <button onClick={() => changeBeer(-1)} className="secondary w-full flex justify-center items-center">◀ Forrige</button>
-                    <button onClick={() => changeBeer(1)} className="w-full flex justify-center items-center">Neste øl ▶</button>
+                    <button
+                        onClick={() => changeBeer(-1)}
+                        disabled={currentBeerNo <= 1}
+                        className="secondary w-full flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        ◀ Forrige
+                    </button>
+                    <button
+                        onClick={() => changeBeer(1)}
+                        disabled={currentBeerNo >= (activeTasting?.total_beers || 999)}
+                        className="w-full flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Neste øl ▶
+                    </button>
                 </div>
             </div>
 

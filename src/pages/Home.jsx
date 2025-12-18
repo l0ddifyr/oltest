@@ -52,14 +52,19 @@ export default function Home() {
                 {
                     event: "UPDATE",
                     schema: "public",
-                    table: "tastings",
-                    filter: `id=eq.\${tastingId}`
+                    table: "tastings"
                 },
                 (payload) => {
-                    const newNo = payload.new.current_beer_no;
-                    if (newNo && newNo !== currentBeerNo) {
-                        setCurrentBeerNo(newNo);
-                        toast(`Neste øl: #\${newNo}`, { icon: '🍺', id: 'next-beer', duration: 4000 });
+                    console.log('Realtime update:', payload);
+                    if (payload.new && payload.new.id === tastingId) {
+                        const newNo = payload.new.current_beer_no;
+                        setCurrentBeerNo((prev) => {
+                            if (newNo && newNo !== prev) {
+                                toast(`Neste øl: ${newNo}`, { icon: '🍺', id: 'next-beer', duration: 4000 });
+                                return newNo;
+                            }
+                            return prev;
+                        });
                     }
                 }
             )
