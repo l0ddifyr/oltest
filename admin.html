@@ -216,22 +216,19 @@
     const name = document.getElementById("newBeerName").value.trim();
     if(!name) return;
 
-    console.log("Prøver å legge til øl:", name, "i test:", currentOlsId);
+    // Bruker et midlertidig høyt nummer (f.eks 999) for å passere CHECK > 0
+    // Vi legger til et tilfeldig tall i tillegg så du kan ha flere i poolen samtidig
+    const tempNo = 500 + Math.floor(Math.random() * 499);
 
-    const { data, error } = await supabase
-            .from("beers")
-            .insert({
-              tasting_id: currentOlsId,
-              name: name,
-              beer_no: 0
-            })
-            .select();
+    const { error } = await supabase.from("beers").insert({
+      tasting_id: currentOlsId,
+      name: name,
+      beer_no: tempNo
+    });
 
-    if (error) {
-      console.error("Supabase feil:", error);
-      alert("Kunne ikke lagre: " + error.message);
+    if(error) {
+      alert("Feil: " + error.message);
     } else {
-      console.log("Lagret suksessfullt:", data);
       document.getElementById("newBeerName").value = "";
       refreshBeers();
     }
@@ -242,30 +239,47 @@
     const no = parseInt(document.getElementById("assignBeerNo").value);
     if(!name || !no) return alert("Velg øl og nummer");
 
-    await supabase.from("beers").upsert({ tasting_id: currentOlsId, beer_no: no, name: name }, { onConflict: "tasting_id,beer_no" });
-    // Rydd opp i "pool"-oppføringen (den med nr 0)
-    await supabase.from("beers").delete().eq("tasting_id", currentOlsId).eq("name", name).eq("beer_no", 0);
+    // 1. Lagre det nye nummeret
+    const { error } = await supabase.from("beers").upsert({
+      tasting_id: currentOlsId,
+      beer_no: no,
+      name: name
+    }, { onConflict: "tasting_id,beer_no" });
 
-    document.getElementById("assignBeerNo").value = "";
-    refreshBeers();
+    if(!error) {
+      // 2. Slett alle versjoner av dette ølet som har et nummer > 499 (rydding i poolen)
+      await supabase.from("beers")
+              .delete()
+              .eq("tasting_id", currentOlsId)
+              .eq("name", name)
+              .gt("beer_no", 499);
+
+      document.getElementById("assignBeerNo").value = "";
+      refreshBeers();
+    } else {
+      alert("Feil ved lagring: " + error.message);
+    }
   };
-
+  
   async function refreshBeers() {
-    const { data } = await supabase.from("beers").select("*").eq("tasting_id", currentOlsId).order("beer_no");
+    const { data } = await supabase.from("beers")
+            .select("*")
+            .eq("tasting_id", currentOlsId)
+            .order("beer_no");
 
-    // Tabell over de som har fått nummer
-    const fasit = data.filter(b => b.beer_no > 0);
+    // Kun vis øl med "ekte" numre (1-499) i tabellen
+    const fasit = data.filter(b => b.beer_no > 0 && b.beer_no <= 499);
     document.getElementById("beerRows").innerHTML = fasit.map(b => `
-      <tr>
-        <td><b>${b.beer_no}</b></td>
-        <td>${b.name}</td>
-        <td style="text-align:right"><button class="danger" onclick="deleteBeer('${b.id}')">Slett</button></td>
-      </tr>
-    `).join("");
+    <tr>
+      <td><b>${b.beer_no}</b></td>
+      <td>${b.name}</td>
+      <td style="text-align:right"><button class="danger" onclick="deleteBeer('${b.id}')">Slett</button></td>
+    </tr>
+  `).join("");
 
-    // Dropdown med alle (for å tildele nummer)
+    // Vis ALLE i dropdown, men merk de som er i poolen (500+)
     document.getElementById("beerPoolSelect").innerHTML = `<option value="">Velg fra pool...</option>` +
-            data.map(b => `<option value="${b.name}">${b.name} ${b.beer_no > 0 ? '(#'+b.beer_no+')' : ''}</option>`).join("");
+            data.map(b => `<option value="${b.name}">${b.name} ${b.beer_no > 499 ? '(i pool)' : '(#'+b.beer_no+')'}</option>`).join("");
   }
 
   window.deleteBeer = async (id) => {
