@@ -1,234 +1,106 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
 
-:root {
-  --primary: #d4a017;
-  --secondary: #800000;
-  --success: #2e7d32;
-  --bg: #f8f9fa;
-  --surface: #ffffff;
-  --text-main: #2d3748;
-  --text-muted: #718096;
-  --border: #e2e8f0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --radius: 12px;
+@layer base {
+  body {
+    @apply bg-bg text-gray-900 font-sans antialiased;
+  }
+
+  h1 {
+    @apply text-4xl font-black text-secondary tracking-tight my-8 text-center;
+  }
+
+  h2 {
+    @apply text-2xl font-bold mb-6 text-gray-800;
+  }
+
+  h3 {
+    @apply text-lg font-bold mb-2 text-gray-900;
+  }
 }
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg);
-  color: var(--text-main);
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+@layer components {
+  .btn-primary {
+    @apply w-full py-4 px-6 rounded-2xl bg-primary text-white font-bold text-lg shadow-sm transition-all hover:bg-primary-dark active:scale-[0.98] flex justify-center items-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply w-auto py-2 px-4 rounded-xl border-2 border-slate-200 text-slate-500 font-bold bg-transparent hover:border-slate-300 hover:text-slate-600 active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply py-2 px-3 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors border border-red-100;
+  }
+
+  .card {
+    @apply bg-surface rounded-2xl p-6 shadow-xl border border-gray-100 mb-6;
+  }
+
+  .input-field {
+    @apply w-full p-4 rounded-xl border-2 border-slate-200 bg-gray-50 font-medium transition-all focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10;
+  }
+
+  .select-field {
+    @apply w-full p-3 rounded-xl border-2 border-slate-200 bg-white font-medium focus:outline-none focus:border-primary;
+  }
 }
 
-/* Layout Wrapper */
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-/* Typography */
-h1,
-h2,
-h3 {
-  color: var(--secondary);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-}
-
-h1 {
-  font-size: 2rem;
-  text-align: center;
-  margin: 1.5rem 0;
-}
-
-h2 {
-  font-size: 1.5rem;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-/* Components */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-/* Inputs & Buttons */
-label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-input,
-select,
-button {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  font-size: 1rem;
-  transition: all 0.2s;
-  box-sizing: border-box;
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.1);
-}
-
-button {
-  cursor: pointer;
-  font-weight: 700;
-  border: none;
-  background-color: var(--primary);
-  color: white;
-  margin-top: 0.5rem;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  filter: brightness(110%);
-}
-
-button:active {
-  transform: translateY(0);
+/* Custom Overrides for JSX classes where we didn't use utility classes directly */
+button:not([class*="btn-"]):not([class*="danger"]):not([class*="secondary"]) {
+  @apply btn-primary;
 }
 
 button.secondary {
-  background-color: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
-
-button.secondary:hover {
-  background-color: var(--bg);
+  @apply btn-secondary;
 }
 
 button.danger {
-  background-color: #e53e3e;
-  width: auto;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
+  @apply btn-danger;
 }
 
-/* Utilities */
-.hidden {
-  display: none !important;
+.danger {
+  @apply btn-danger;
 }
 
-.text-center {
-  text-align: center;
+input:not([type="range"]) {
+  @apply input-field;
 }
 
-.flex {
-  display: flex;
-  gap: 0.5rem;
+select:not([class*="w-24"]) {
+  @apply select-field;
 }
 
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-/* Range Inputs */
+/* Range Slider */
 input[type=range] {
   -webkit-appearance: none;
-  height: 8px;
-  background: var(--border);
-  border-radius: 4px;
-  padding: 0;
-  border: none;
+  @apply bg-transparent h-7 my-2 cursor-pointer w-full;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  @apply w-full h-2 bg-slate-200 rounded-lg;
 }
 
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: var(--primary);
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.1s;
+  @apply h-7 w-7 rounded-full bg-white border-[6px] border-primary shadow-md -mt-[10px] transition-transform;
 }
 
-input[type=range]::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+input[type=range]:active::-webkit-slider-thumb {
+  @apply scale-110 ring-4 ring-primary/20;
 }
 
-/* Specific to App Logic */
-.score-val {
-  background: #fffbef;
-  color: var(--primary);
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-weight: 800;
-  border: 1px solid rgba(212, 160, 23, 0.2);
+/* Utilities */
+.container-wide {
+  @apply max-w-5xl mx-auto px-4;
 }
 
-.beer-info-box {
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: var(--radius);
-  padding: 1rem;
-  text-align: center;
-  margin-bottom: 2rem;
+.container {
+  @apply max-w-2xl mx-auto px-4;
 }
 
-#currentBeerText {
-  color: var(--secondary);
-  font-size: 2rem;
-  font-weight: 900;
-}
-
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-}
-
-th {
-  background: var(--bg);
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.winner-row {
-  background-color: #fffbef;
+.pill {
+  @apply inline-flex items-center;
 }
