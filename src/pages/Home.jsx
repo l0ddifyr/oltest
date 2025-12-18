@@ -45,27 +45,37 @@ export default function Home() {
 
     // Dedicated Subscription Effect
     useEffect(() => {
-        if (!tastingId || !user) return;
+        if (!tastingId) return;
 
-        const channel = supabase.channel(`ols-\${tastingId}`)
-            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tastings", filter: `id=eq.\${tastingId}` }, (payload) => {
-                const newNo = payload.new.current_beer_no;
-                if (newNo) {
-                    setCurrentBeerNo(newNo);
-                    toast(`Neste øl: #\${newNo}`, { icon: '🍺', id: 'next-beer' });
+        const channel = supabase.channel(`ols-live-\${tastingId}`)
+            .on("postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "tastings",
+                    filter: `id=eq.\${tastingId}`
+                },
+                (payload) => {
+                    const newNo = payload.new.current_beer_no;
+                    if (newNo && newNo !== currentBeerNo) {
+                        setCurrentBeerNo(newNo);
+                        toast(`Neste øl: #\${newNo}`, { icon: '🍺', id: 'next-beer', duration: 4000 });
+                    }
                 }
-            })
+            )
             .subscribe((status) => {
-                setLiveStatus(status === "SUBSCRIBED" ? "LIVE ✓" : "Offline");
-                if (status === "CHANNEL_ERROR") {
-                    toast.error("Mistet tilkobling til server");
+                if (status === "SUBSCRIBED") {
+                    setLiveStatus("LIVE ✓");
+                } else {
+                    setLiveStatus("Offline");
+                    if (status === "CHANNEL_ERROR") console.error("Realtime Error");
                 }
             });
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [tastingId, user]);
+    }, [tastingId]);
 
     const loadMeta = async (id) => {
         const { data } = await supabase.from("tastings").select("*").eq("id", id).single();
