@@ -1,231 +1,80 @@
 <!doctype html>
 <html lang="no">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resultater – Juleøl 🍺</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background-color: #f8f9fa; color: #333; }
-    .card { background: white; border: 1px solid #ddd; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    h1, h2 { color: #800000; text-align: center; margin-top: 0; }
-
-    input, button, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
-    button { background: #d4a017; color: white; border: none; font-weight: 700; cursor: pointer; }
-    button.secondary { background: #eee; color: #333; border: 1px solid #ddd; margin-top: 10px; }
-
-    .chart-container { position: relative; height: 50vh; width: 100%; margin: 20px 0; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; }
-    th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
-    th { background: #f1f1f1; font-weight: 700; }
-    .right { text-align: right; }
-
-    .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: bold; background: #eee; }
-    .pill.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-
-    .muted { color: #666; font-size: 13px; text-align: center; }
-    .hidden { display: none !important; }
-
-    /* Vinner-highlight */
-    .winner-row { background-color: #fff9eb; font-weight: bold; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<h1>Resultater 🍻</h1>
+  <h1>Resultater 🍻</h1>
 
-<div id="sectionLogin" class="card">
-  <h2>Logg inn for resultater</h2>
-  <input id="email" placeholder="E-post" style="margin-bottom:10px" />
-  <input id="pass" placeholder="Passord" type="password" />
-  <button id="loginBtn" style="margin-top:10px">Se live resultater</button>
-</div>
-
-<div id="sectionApp" class="hidden">
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-      <h3 style="margin:0">Velg ølsmaking</h3>
-      <button id="logoutBtn" class="secondary" style="width:auto; margin:0; padding: 8px 12px;">Logg ut</button>
-    </div>
-    <select id="olsSelect"><option value="">Laster ølsmakinger...</option></select>
-    <button id="refreshBtn" style="margin-top:10px">Oppdater Resultater 🔄</button>
+  <div id="sectionLogin" class="card">
+    <h2>Logg inn for resultater</h2>
+    <input id="email" placeholder="E-post" style="margin-bottom:10px" />
+    <input id="pass" placeholder="Passord" type="password" />
+    <button id="loginBtn" style="margin-top:10px">Se live resultater</button>
   </div>
 
-  <div id="sectionContent" class="hidden">
+  <div id="sectionApp" class="hidden">
     <div class="card">
-      <h2 id="chartTitle">Stillingen akkurat nå</h2>
-      <div class="chart-container">
-        <canvas id="resultsChart"></canvas>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+        <h3 style="margin:0">Velg ølsmaking</h3>
+        <button id="logoutBtn" class="secondary" style="width:auto; margin:0; padding: 8px 12px;">Logg ut</button>
+      </div>
+      <select id="olsSelect">
+        <option value="">Laster ølsmakinger...</option>
+      </select>
+      <button id="refreshBtn" style="margin-top:10px">Oppdater Resultater 🔄</button>
+    </div>
+
+    <div id="sectionContent" class="hidden">
+      <div class="card">
+        <h2 id="chartTitle">Stillingen akkurat nå</h2>
+        <div class="chart-container">
+          <canvas id="resultsChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ranking</h2>
+        <div id="statusPillContainer" style="text-align:center; margin-bottom:10px;"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Øl / Fasit</th>
+              <th class="right">Snitt</th>
+              <th class="right">Stemmer</th>
+            </tr>
+          </thead>
+          <tbody id="rankingRows"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary style="cursor:pointer; font-weight:bold; text-align:center;">Se alle enkeltstemmer</summary>
+          <table style="font-size: 12px; margin-top:15px;">
+            <thead>
+              <tr>
+                <th>Øl</th>
+                <th>Navn</th>
+                <th class="right">Score</th>
+              </tr>
+            </thead>
+            <tbody id="allVotesRows"></tbody>
+          </table>
+        </details>
       </div>
     </div>
-
-    <div class="card">
-      <h2>Ranking</h2>
-      <div id="statusPillContainer" style="text-align:center; margin-bottom:10px;"></div>
-      <table>
-        <thead>
-        <tr>
-          <th>#</th>
-          <th>Øl / Fasit</th>
-          <th class="right">Snitt</th>
-          <th class="right">Stemmer</th>
-        </tr>
-        </thead>
-        <tbody id="rankingRows"></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <details>
-        <summary style="cursor:pointer; font-weight:bold; text-align:center;">Se alle enkeltstemmer</summary>
-        <table style="font-size: 12px; margin-top:15px;">
-          <thead>
-          <tr>
-            <th>Øl</th>
-            <th>Navn</th>
-            <th class="right">Score</th>
-          </tr>
-          </thead>
-          <tbody id="allVotesRows"></tbody>
-        </table>
-      </details>
-    </div>
   </div>
-</div>
 
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let myChart = null;
-
-  // Navigasjon
-  function showStep(step) {
-    document.getElementById("sectionLogin").classList.toggle("hidden", step !== "login");
-    document.getElementById("sectionApp").classList.toggle("hidden", step !== "app");
-  }
-
-  // Auth
-  async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) { showStep("app"); loadTastings(); } else { showStep("login"); }
-  }
-
-  document.getElementById("loginBtn").onclick = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: document.getElementById("email").value,
-      password: document.getElementById("pass").value
-    });
-    if (error) alert(error.message); else checkSession();
-  };
-
-  document.getElementById("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.reload(); };
-
-  // Last tilgjengelige smakinger
-  async function loadTastings() {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("tastings").select("*").eq("created_by", user.id).order("created_at", { ascending: false });
-    document.getElementById("olsSelect").innerHTML = `<option value="">Velg ølsmaking...</option>` +
-            data.map(o => `<option value="${o.id}">${o.title}</option>`).join("");
-  }
-
-  // Hovedfunksjon for å hente og vise data
-  async function loadResults() {
-    const id = document.getElementById("olsSelect").value;
-    if (!id) return;
-
-    // 1. Hent Meta-data (for reveal-status)
-    const { data: meta } = await supabase.from("tastings").select("*").eq("id", id).single();
-
-    // 2. Hent Fasit (beers_public returnerer bare navn hvis revealed=true)
-    const { data: beers } = await supabase.from("beers_public").select("*").eq("tasting_id", id);
-    const beersMap = new Map(beers.map(b => [b.beer_no, b.name]));
-
-    // 3. Hent alle stemmer
-    const { data: ratings } = await supabase.from("ratings").select("*").eq("tasting_id", id);
-
-    renderResults(ratings, beersMap, meta);
-  }
-
-  function renderResults(ratings, beersMap, meta) {
-    // Beregn statistikk
-    const stats = {};
-    ratings.forEach(r => {
-      if (!stats[r.beer_no]) stats[r.beer_no] = { beer_no: r.beer_no, sum: 0, count: 0 };
-      stats[r.beer_no].sum += r.score;
-      stats[r.beer_no].count++;
-    });
-
-    const ranking = Object.values(stats).map(s => ({
-      ...s,
-      avg: s.sum / s.count,
-      name: beersMap.get(s.beer_no) || `Øl #${s.beer_no}`
-    })).sort((a, b) => b.avg - a.avg);
-
-    // Oppdater UI
-    document.getElementById("sectionContent").classList.remove("hidden");
-    document.getElementById("statusPillContainer").innerHTML = meta.revealed ?
-            `<span class="pill success">REVEALED: Fasit er ute! ✅</span>` :
-            `<span class="pill">SJULT: Kun poeng vises 🔒</span>`;
-
-    renderChart(ranking);
-
-    // Render Tabell
-    document.getElementById("rankingRows").innerHTML = ranking.map((r, index) => `
-      <tr class="${index === 0 ? 'winner-row' : ''}">
-        <td><b>${r.beer_no}</b></td>
-        <td>${r.name}</td>
-        <td class="right"><b>${r.avg.toFixed(1)}</b></td>
-        <td class="right muted">${r.count} stemmer</td>
-      </tr>
-    `).join("");
-
-    // Render Enkeltstemmer
-    const sortedVotes = [...ratings].sort((a,b) => b.score - a.score);
-    document.getElementById("allVotesRows").innerHTML = sortedVotes.map(v => `
-      <tr>
-        <td>Øl #${v.beer_no}</td>
-        <td>${v.display_name}</td>
-        <td class="right">${v.score}</td>
-      </tr>
-    `).join("");
-  }
-
-  function renderChart(ranking) {
-    const ctx = document.getElementById('resultsChart').getContext('2d');
-    if (myChart) myChart.destroy();
-
-    myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ranking.map(r => r.name),
-        datasets: [{
-          label: 'Snittscore (0-100)',
-          data: ranking.map(r => r.avg.toFixed(1)),
-          backgroundColor: '#d4a017',
-          borderRadius: 8,
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, max: 100 }
-        },
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
-  }
-
-  document.getElementById("refreshBtn").onclick = loadResults;
-  document.getElementById("olsSelect").onchange = loadResults;
-
-  checkSession();
-</script>
+  <script type="module" src="results.js"></script>
 </body>
+
 </html>

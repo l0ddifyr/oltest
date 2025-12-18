@@ -1,0 +1,307 @@
+:root {
+    --primary: #d4a017;
+    --secondary: #800000;
+    --success: #2e7d32;
+    --bg: #fcfcfc;
+    --white: #ffffff;
+    --gray-light: #f4f4f4;
+    --gray-border: #ddd;
+    --text: #333;
+    --text-muted: #666;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 12px;
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Typography */
+h1 {
+    text-align: center;
+    color: var(--secondary);
+    margin: 20px 0;
+    font-size: 28px;
+}
+
+h2 {
+    color: var(--secondary);
+    text-align: center;
+    margin-top: 0;
+}
+
+h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+/* Components */
+.card {
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.muted {
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.pill {
+    padding: 5px 12px;
+    background: #e8f5e9;
+    color: var(--success);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.pill.info {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.pill.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+/* Inputs & Buttons */
+label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+input,
+button,
+select {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    font-size: 16px;
+    box-sizing: border-box;
+    padding: 14px;
+    margin-bottom: 10px;
+}
+
+button {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #b88a14;
+    transition: transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button.secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+    box-shadow: none;
+}
+
+button.danger {
+    background: #ff4d4d;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+    width: auto;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* Specific: Index / Tasting Screen */
+input#joinCode,
+input#name {
+    height: 65px;
+    border: 2px solid #eee;
+    font-size: 20px;
+    font-weight: 600;
+    background: #f9f9f9;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input#joinCode {
+    letter-spacing: 8px;
+    font-size: 28px;
+    text-transform: uppercase;
+}
+
+.btn-large {
+    width: 100%;
+    height: 70px;
+    border-radius: 18px;
+    font-size: 22px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+#start {
+    background: var(--primary);
+    box-shadow: 0 5px 0 #b88a14;
+}
+
+#save {
+    background: var(--success);
+    box-shadow: 0 5px 0 #1e5622;
+    margin-top: 20px;
+}
+
+#reset {
+    background: #f1f1f1;
+    color: #666;
+    font-size: 16px;
+    height: 50px;
+    margin-top: 30px;
+    box-shadow: none;
+    border: 1px solid #ddd;
+}
+
+/* Sliders */
+.score-row {
+    width: 100%;
+    margin-bottom: 28px;
+}
+
+.score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.score-val {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--primary);
+    background: #fff9eb;
+    padding: 4px 14px;
+    border-radius: 10px;
+    border: 1px solid #ffeeba;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 18px;
+    border-radius: 10px;
+    background: #eee;
+    outline: none;
+    margin: 0;
+    touch-action: none;
+    padding: 0;
+    border: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Specific: Admin & Results tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+th,
+td {
+    padding: 12px 5px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+th {
+    background: #f1f1f1;
+    font-weight: 700;
+}
+
+.right {
+    text-align: right;
+}
+
+.winner-row {
+    background-color: #fff9eb;
+    font-weight: bold;
+}
+
+/* Specific: Beer Info */
+.beer-info-box {
+    background: #fff5f5;
+    border: 2px solid #feb2b2;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#currentBeerText {
+    font-size: 32px;
+    font-weight: 900;
+    color: #800000;
+    margin: 10px 0;
+}
+
+/* Admin: Rows */
+.row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.row>* {
+    flex: 1;
+    min-width: 120px;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
+
+/* Charts */
+.chart-container {
+    position: relative;
+    height: 50vh;
+    width: 100%;
+    margin: 20px 0;
+}
