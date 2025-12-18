@@ -221,9 +221,9 @@ export default function Admin() {
                 <div className="text-gray-500 mt-2 text-sm uppercase tracking-wide">{activeTasting?.title}</div>
                 <div className="text-4xl font-black text-[#800000] my-2">Øl #{currentBeerNo}</div>
 
-                <div className="flex gap-2 mt-4">
-                    <button onClick={() => changeBeer(-1)} className="secondary">◀ Forrige</button>
-                    <button onClick={() => changeBeer(1)}>Neste øl ▶</button>
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                    <button onClick={() => changeBeer(-1)} className="secondary w-full flex justify-center items-center">◀ Forrige</button>
+                    <button onClick={() => changeBeer(1)} className="w-full flex justify-center items-center">Neste øl ▶</button>
                 </div>
             </div>
 
