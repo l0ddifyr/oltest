@@ -73,6 +73,10 @@ select:not([class*="w-24"]) {
   @apply select-field;
 }
 
+.sdasd {
+  @apply container-full;
+}
+
 /* Range Slider */
 input[type=range] {
   -webkit-appearance: none;
