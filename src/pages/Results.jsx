@@ -81,7 +81,7 @@ export default function Results() {
         const rank = Object.values(stats).map(s => ({
             ...s,
             avg: s.sum / s.count,
-            name: beersMap.get(s.beer_no) || `Øl #\${s.beer_no}`
+            name: beersMap.get(s.beer_no) || `Øl #${s.beer_no}`
         })).sort((a, b) => b.avg - a.avg);
 
         setRanking(rank);
@@ -125,7 +125,7 @@ export default function Results() {
     }
 
     return (
-        <div className="container pb-20">
+        <div className="container-full p-20">
             <div className="card">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="m-0">Velg ølsmaking</h3>
@@ -155,9 +155,9 @@ export default function Results() {
                             </span>
                         </div>
 
-                        <table>
+                        <table className="w-full">
                             <thead>
-                                <tr>
+                                <tr className='text-left'>
                                     <th className="w-10">#</th>
                                     <th>Øl / Fasit</th>
                                     <th className="text-right">Snitt</th>
@@ -170,7 +170,7 @@ export default function Results() {
                                         <td className="font-bold">{r.beer_no}</td>
                                         <td>{r.name} {i === 0 && '🏆'}</td>
                                         <td className="text-right font-bold text-lg">{r.avg.toFixed(1)}</td>
-                                        <td className="text-right text-gray-500 text-xs">{r.count}</td>
+                                        <td className="text-right text-gray-500 text-lg font-bold">{r.count}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -180,11 +180,11 @@ export default function Results() {
                     <div className="card">
                         <details>
                             <summary className="cursor-pointer font-bold text-center p-2">Se alle enkeltstemmer</summary>
-                            <table className="text-xs mt-4">
+                            <table className="text-xs mt-4 w-full">
                                 <thead>
                                     <tr>
-                                        <th>Øl</th>
-                                        <th>Navn</th>
+                                        <th className="text-left">Øl</th>
+                                        <th className="text-left">Navn</th>
                                         <th className="text-right">Score</th>
                                     </tr>
                                 </thead>

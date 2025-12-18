@@ -199,7 +199,7 @@ export default function Home() {
             </div>
 
             <div className="beer-info-box shadow-sm">
-                <div className="uppercase tracking-widest text-[#800000] text-sm font-bold opacity-70">SMAKE NR</div>
+                <div className="uppercase tracking-widest text-[#800000] text-sm font-bold opacity-70">ØL NR</div>
                 <div id="currentBeerText" className="text-5xl mt-2 mb-2">#{currentBeerNo}</div>
             </div>
 
