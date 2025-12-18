@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'; // Added import
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
+    const { user, loading: authLoading, signInAnonymously } = useAuth();
     const [step, setStep] = useState('setup'); // setup | rate
     const [loading, setLoading] = useState(false);
     const [tastingId, setTastingId] = useState(localStorage.getItem('j_id') || null);
-    const [userId, setUserId] = useState(null);
     const [meta, setMeta] = useState(null);
     const [currentBeerNo, setCurrentBeerNo] = useState(1);
     const [myRatings, setMyRatings] = useState([]);
 
     // Rating State
     const [scores, setScores] = useState({ smak: 0, ettersmak: 0, farge: 0, lukt: 0 });
-    const [statusMsg, setStatusMsg] = useState('');
     const [liveStatus, setLiveStatus] = useState('Offline');
 
     // Inputs
@@ -22,34 +23,26 @@ export default function Home() {
     const totalScore = Number(scores.smak) + Number(scores.ettersmak) + Number(scores.farge) + Number(scores.lukt);
 
     useEffect(() => {
-        ensureSession();
-    }, []);
+        if (!authLoading && !user) {
+            signInAnonymously();
+        }
+    }, [user, authLoading]);
 
     useEffect(() => {
-        if (tastingId && userId) {
+        if (tastingId && user) {
             loadMeta(tastingId);
             loadMyRatings();
             loadCurrentRating();
             subscribe();
             setStep('rate');
         }
-    }, [tastingId, userId]);
+    }, [tastingId, user]);
 
     useEffect(() => {
-        if (tastingId && userId) {
+        if (tastingId && user) {
             loadCurrentRating();
         }
     }, [currentBeerNo]);
-
-    const ensureSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setUserId(session.user.id);
-        } else {
-            const { data } = await supabase.auth.signInAnonymously();
-            if (data.session) setUserId(data.session.user.id);
-        }
-    };
 
     const loadMeta = async (id) => {
         const { data } = await supabase.from("tastings").select("*").eq("id", id).single();
@@ -60,23 +53,22 @@ export default function Home() {
     };
 
     const loadMyRatings = async () => {
-        if (!tastingId || !userId) return;
+        if (!tastingId || !user) return;
         const { data } = await supabase.from("ratings").select("beer_no, score")
-            .eq("tasting_id", tastingId).eq("user_id", userId).order("beer_no", { ascending: false });
+            .eq("tasting_id", tastingId).eq("user_id", user.id).order("beer_no", { ascending: false });
         setMyRatings(data || []);
     };
 
     const loadCurrentRating = async () => {
-        if (!tastingId || !userId) return;
+        if (!tastingId || !user) return;
         const { data } = await supabase.from("ratings").select("*")
-            .eq("tasting_id", tastingId).eq("user_id", userId).eq("beer_no", currentBeerNo).maybeSingle();
+            .eq("tasting_id", tastingId).eq("user_id", user.id).eq("beer_no", currentBeerNo).maybeSingle();
 
         if (data) {
             setScores({ smak: data.smak, ettersmak: data.ettersmak, farge: data.farge, lukt: data.lukt });
-            setStatusMsg("Du har stemt på denne.");
+            toast("Du har stemt på denne.", { icon: '📝', id: 'vote-info' });
         } else {
             setScores({ smak: 0, ettersmak: 0, farge: 0, lukt: 0 });
-            setStatusMsg("");
         }
     };
 
@@ -99,17 +91,19 @@ export default function Home() {
     };
 
     const handleJoin = async () => {
-        if (joinCode.length !== 4 || !name) return alert("Sjekk kode og navn!");
+        if (joinCode.length !== 4 || !name) return toast.error("Sjekk kode og navn!");
         setLoading(true);
-        setStatusMsg("Kobler til...");
+        const loadId = toast.loading("Kobler til...");
 
         const { data: ols } = await supabase.rpc("get_ols_by_join_code", { p_code: joinCode.toUpperCase() });
 
         if (!ols || ols.length === 0) {
-            setStatusMsg("Ugyldig kode");
+            toast.error("Ugyldig kode", { id: loadId });
             setLoading(false);
             return;
         }
+
+        toast.success("Velkommen!", { id: loadId });
 
         const tid = ols[0].id;
         localStorage.setItem("j_id", tid);
@@ -120,11 +114,11 @@ export default function Home() {
     };
 
     const handleSave = async () => {
-        setStatusMsg("Lagrer...");
+        const toastId = toast.loading("Lagrer...");
         const { error } = await supabase.from("ratings").upsert({
             tasting_id: tastingId,
             beer_no: currentBeerNo,
-            user_id: userId,
+            user_id: user.id,
             display_name: name,
             smak: scores.smak,
             ettersmak: scores.ettersmak,
@@ -134,10 +128,10 @@ export default function Home() {
         }, { onConflict: "tasting_id,beer_no,user_id" });
 
         if (!error) {
-            setStatusMsg("✅ Lagret!");
+            toast.success("Lagret! ✅", { id: toastId });
             loadMyRatings();
         } else {
-            setStatusMsg("Feil ved lagring");
+            toast.error("Feil ved lagring", { id: toastId });
         }
     };
 
@@ -173,7 +167,7 @@ export default function Home() {
                     <button onClick={handleJoin} className="h-16 text-xl rounded-xl shadow-lg border-b-4 border-[#b88a14]">
                         {loading ? 'Kobler til...' : 'START SMAKING 🚀'}
                     </button>
-                    <div className="mt-4 text-[#d4a017] font-bold min-h-[24px]">{statusMsg}</div>
+                    <div className="mt-4 min-h-[24px]"></div>
                 </div>
             </div>
         );
@@ -236,12 +230,10 @@ export default function Home() {
             <button
                 id="save"
                 onClick={handleSave}
-                className="w-full h-16 text-xl rounded-xl shadow-lg border-b-4 border-[#1e5622] bg-[#2e7d32] mb-4"
+                className="w-full h-16 text-xl rounded-xl shadow-lg border-b-4 border-[#1e5622] bg-[#2e7d32] mb-8"
             >
                 LAGRE POENG 💾
             </button>
-
-            <div className="text-center font-bold text-[#2e7d32] min-h-[24px] mb-8">{statusMsg}</div>
 
             <div className="card p-4">
                 <h3 className="text-center mb-4">Dine registreringer</h3>

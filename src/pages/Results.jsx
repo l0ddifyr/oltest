@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useAuth } from '../context/AuthContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function Results() {
-    const [step, setStep] = useState('login');
+    const { user, loading: authLoading, signInAnonymously, signOut } = useAuth();
     const [tastings, setTastings] = useState([]);
     const [selectedTastingId, setSelectedTastingId] = useState('');
 
@@ -15,36 +16,27 @@ export default function Results() {
     const [ranking, setRanking] = useState([]);
     const [allVotes, setAllVotes] = useState([]);
 
-    // Login
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    useEffect(() => {
+        if (!authLoading && !user) {
+            signInAnonymously();
+        }
+    }, [user, authLoading]);
 
     useEffect(() => {
-        checkSession();
-    }, []);
-
-    const checkSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setStep('app');
+        if (user) {
             loadTastings();
-        } else {
-            setStep('login');
         }
-    };
+    }, [user]);
 
-    const handleLogin = async () => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) alert(error.message); else checkSession();
-    };
+
+
+
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
+        await signOut();
     };
 
     const loadTastings = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         const { data } = await supabase.from("tastings").select("*").eq("created_by", user.id).order("created_at", { ascending: false });
         setTastings(data || []);
@@ -110,19 +102,7 @@ export default function Results() {
         }
     };
 
-    if (step === 'login') {
-        return (
-            <div className="container max-w-sm mx-auto mt-20 text-center">
-                <h1>Resultater 🍻</h1>
-                <div className="card">
-                    <h2>Logg inn</h2>
-                    <input placeholder="E-post" value={email} onChange={e => setEmail(e.target.value)} className="mb-2" />
-                    <input placeholder="Passord" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-                    <button onClick={handleLogin}>Logg inn</button>
-                </div>
-            </div>
-        );
-    }
+
 
     return (
         <div className="container-full p-20">

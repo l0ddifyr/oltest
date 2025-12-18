@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
+
+import { useAuth } from '../context/AuthContext';
 
 export default function Admin() {
+    const { user, loading: authLoading, signOut } = useAuth();
     const [step, setStep] = useState('login'); // login | picker | control
     const [loading, setLoading] = useState(false);
 
@@ -27,51 +31,65 @@ export default function Admin() {
     const [fasitBeers, setFasitBeers] = useState([]);
 
     useEffect(() => {
-        checkSession();
-    }, []);
+        if (!authLoading) {
+            if (user) {
+                if (step === 'login') {
+                    setStep('picker');
+                    loadTastings();
+                }
+            } else {
+                setStep('login');
+            }
+        }
+    }, [user, authLoading]);
 
     useEffect(() => {
-        let interval;
+        let channel;
         if (step === 'control' && currentOlsId) {
             updateVoterProgress();
-            interval = setInterval(updateVoterProgress, 5000);
+            // Subscribe to Realtime changes
+            channel = supabase.channel(`admin-ratiings-\${currentOlsId}`)
+                .on("postgres_changes",
+                    { event: "*", schema: "public", table: "ratings", filter: `tasting_id=eq.\${currentOlsId}` },
+                    () => {
+                        updateVoterProgress();
+                    }
+                )
+                .subscribe();
         }
-        return () => clearInterval(interval);
+        return () => {
+            if (channel) supabase.removeChannel(channel);
+        };
     }, [step, currentOlsId, currentBeerNo]);
 
-    const checkSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setStep('picker');
-            loadTastings();
-        } else {
-            setStep('login');
-        }
-    };
+
 
     const handleLogin = async () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) alert("Feil: " + error.message);
-        else checkSession();
+        if (error) toast.error("Feil: " + error.message);
+        // Context will trigger effect
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
+        await signOut();
+        // Context will updates state, Effect sets step to login
     };
 
     const loadTastings = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         const { data } = await supabase.from("tastings").select("*").eq("created_by", user.id).order("created_at", { ascending: false });
         setTastings(data || []);
     };
 
     const handleCreate = async () => {
-        if (!newTitle || !newCount) return alert("Fyll inn navn og antall");
+        if (!newTitle || !newCount) return toast.error("Fyll inn navn og antall");
         const { data, error } = await supabase.from("tastings").insert({ title: newTitle, total_beers: newCount }).select().single();
-        if (!error) selectTasting(data.id);
-        else alert(error.message);
+        if (!error) {
+            toast.success("Ny smaking opprettet! 🍺");
+            selectTasting(data.id);
+        } else {
+            toast.error(error.message);
+        }
     };
 
     const selectTasting = async (id) => {
@@ -113,22 +131,32 @@ export default function Admin() {
         const { error } = await supabase.from("beers").insert({
             tasting_id: currentOlsId, name: newBeerName, beer_no: tempNo
         });
-        if (error) alert(error.message);
-        else { setNewBeerName(''); refreshFasit(currentOlsId); }
+        if (error) toast.error(error.message);
+        else {
+            toast.success("Øl lagt til i poolen!");
+            setNewBeerName('');
+            refreshFasit(currentOlsId);
+        }
     };
 
     const handleAssign = async (beerId, number) => {
         if (!number) return;
         const { error } = await supabase.from("beers").update({ beer_no: number }).eq("id", beerId);
-        if (error) alert(error.message);
-        else refreshFasit(currentOlsId);
+        if (error) toast.error(error.message);
+        else {
+            toast.success("Fasit oppdatert!");
+            refreshFasit(currentOlsId);
+        }
     };
 
     const handleUnassign = async (beerId) => {
         const tempNo = 500 + Math.floor(Math.random() * 9999);
         const { error } = await supabase.from("beers").update({ beer_no: tempNo }).eq("id", beerId);
-        if (error) alert(error.message);
-        else refreshFasit(currentOlsId);
+        if (error) toast.error(error.message);
+        else {
+            toast.success("Flyttet tilbake til pool!");
+            refreshFasit(currentOlsId);
+        }
     };
 
     const refreshFasit = async (id = currentOlsId) => {

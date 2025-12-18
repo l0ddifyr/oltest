@@ -13,10 +13,14 @@ import './index.css'
 // The user asked for professional. Browser Router is more professional URL-wise.
 // I will use BrowserRouter with the basename.
 
+import { AuthProvider } from './context/AuthContext'
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter basename="/oltest/">
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )
