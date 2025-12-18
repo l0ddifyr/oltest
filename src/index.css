@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+:root {
+  --primary: #d4a017;
+  --secondary: #800000;
+  --success: #2e7d32;
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --text-main: #2d3748;
+  --text-muted: #718096;
+  --border: #e2e8f0;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius: 12px;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Layout Wrapper */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Typography */
+h1,
+h2,
+h3 {
+  color: var(--secondary);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  font-size: 2rem;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+h2 {
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Components */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Inputs & Buttons */
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.1);
+}
+
+button {
+  cursor: pointer;
+  font-weight: 700;
+  border: none;
+  background-color: var(--primary);
+  color: white;
+  margin-top: 0.5rem;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  filter: brightness(110%);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+button.secondary:hover {
+  background-color: var(--bg);
+}
+
+button.danger {
+  background-color: #e53e3e;
+  width: auto;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* Utilities */
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+/* Range Inputs */
+input[type=range] {
+  -webkit-appearance: none;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  padding: 0;
+  border: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* Specific to App Logic */
+.score-val {
+  background: #fffbef;
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 800;
+  border: 1px solid rgba(212, 160, 23, 0.2);
+}
+
+.beer-info-box {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+#currentBeerText {
+  color: var(--secondary);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+th {
+  background: var(--bg);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.winner-row {
+  background-color: #fffbef;
+}

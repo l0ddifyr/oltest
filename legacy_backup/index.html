@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="no">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <title>Juleøl-test 🍻</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Juleøl-test 🍻</h1>
+
+<div id="screenSetup" class="card">
+    <label for="joinCode">Join-kode</label>
+    <input id="joinCode" placeholder="KODE" maxlength="4" autotype="text" />
+
+    <label for="name">Ditt Navn</label>
+    <input id="name" placeholder="Skriv her..." autocomplete="name" />
+
+    <button id="start" class="btn-large">START SMAKING 🚀</button>
+    <div class="muted" id="setupStatus">—</div>
+</div>
+
+<div id="screenRate" class="card" style="display:none">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <span class="pill" id="livePill">Kobler...</span>
+        <div class="muted" style="text-align:right"><b><span id="who">—</span></b> @ <span id="olsTitle">—</span></div>
+    </div>
+
+    <div class="beer-info-box">
+        <div class="muted">Nå smaker vi:</div>
+        <div style="font-size:36px; font-weight:900; color: var(--secondary);" id="currentBeerLabel">Øl #1</div>
+        <div id="beerHelp" class="muted">Øl 1 av ?</div>
+    </div>
+
+    <div class="score-row">
+        <div class="score-header"><label>Smak (0-50)</label><div class="score-val" id="val-smak">0</div></div>
+        <input type="range" id="smak" min="0" max="50" value="0">
+    </div>
+
+    <div class="score-row">
+        <div class="score-header"><label>Ettersmak (0-20)</label><div class="score-val" id="val-ettersmak">0</div></div>
+        <input type="range" id="ettersmak" min="0" max="20" value="0">
+    </div>
+
+    <div class="score-row">
+        <div class="score-header"><label>Farge (0-20)</label><div class="score-val" id="val-farge">0</div></div>
+        <input type="range" id="farge" min="0" max="20" value="0">
+    </div>
+
+    <div class="score-row">
+        <div class="score-header"><label>Lukt (0-10)</label><div class="score-val" id="val-lukt">0</div></div>
+        <input type="range" id="lukt" min="0" max="10" value="0">
+    </div>
+
+    <div style="font-size:28px; font-weight:900; text-align: center; margin: 25px 0; color: var(--secondary);" id="totalPreview">0 / 100 poeng</div>
+
+    <button id="save" class="btn-large">LAGRE POENG 💾</button>
+    <div id="status" style="text-align:center; margin-top:15px; font-weight:bold; color: var(--success); min-height: 24px;"></div>
+
+    <div class="card" style="padding: 10px; margin-top:30px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; text-align: center;">Dine registreringer</h3>
+        <table>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+
+    <button id="reset" class="btn-large">Avbryt / Logg ut</button>
+</div>
+
+<script type="module" src="index.js"></script>
+
+</body>
+</html>
