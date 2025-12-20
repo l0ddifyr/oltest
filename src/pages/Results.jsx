@@ -16,24 +16,23 @@ export default function Results() {
     const [ranking, setRanking] = useState([]);
     const [allVotes, setAllVotes] = useState([]);
 
-    useEffect(() => {
-        if (!authLoading && !user) {
-            signInAnonymously();
-        }
-    }, [user, authLoading]);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     useEffect(() => {
-        if (user) {
+        if (user && !user.is_anonymous) {
             loadTastings();
         }
     }, [user]);
 
-
-
-
+    const handleLogin = async () => {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) alert("Feil: " + error.message); // Simple alert or toast
+    };
 
     const handleLogout = async () => {
         await signOut();
+        setTastings([]);
     };
 
     const loadTastings = async () => {
@@ -103,6 +102,31 @@ export default function Results() {
     };
 
 
+
+    if (!user || user.is_anonymous) {
+        return (
+            <div className="container max-w-sm mx-auto mt-20 text-center">
+                <h1>Resultater 📊</h1>
+                <div className="card">
+                    <h2>Logg inn for å se resultater</h2>
+                    <input
+                        placeholder="E-post"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="mb-2 w-full p-2 border rounded"
+                    />
+                    <input
+                        placeholder="Passord"
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="mb-4 w-full p-2 border rounded"
+                    />
+                    <button onClick={handleLogin} className="w-full">Logg inn</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container-full p-20">
